@@ -1,0 +1,1740 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bộ Chuyển Đổi Âm Thanh Đa Định Dạng - D.T.Chánh</title>
+    
+    <!-- CSS Tự viết rõ ràng, ngăn nắp, không tải từ liên kết ngoài -->
+    <style>
+      :root {
+        --bg-primary: #f8fafc;
+        --bg-panel: #ffffff;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --color-primary: #0284c7;
+        --color-primary-hover: #0369a1;
+        --color-success: #16a34a;
+        --color-success-hover: #15803d;
+        --color-danger: #dc2626;
+        --color-danger-hover: #b91c1c;
+        --color-border: #cbd5e1;
+        --color-card-bg: #ffffff;
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        padding: 0.5rem;
+        margin: 0rem;
+        font-size: 1.1rem;
+        font-weight: normal;
+        padding-bottom: 5rem;
+        line-height: 1.5;
+      }
+
+      /* Quy tắc CSS cho tiêu đề */
+      h1 {
+        font-size: 1.6rem;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 0.2rem;
+        color: var(--text-primary);
+      }
+
+      .author-title {
+        font-style: normal;
+        font-size: 1.2rem;
+        text-align: right;
+        margin-bottom: 1rem;
+        font-weight: normal;
+        color: var(--text-secondary);
+      }
+
+      h2 {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-top: 0rem;
+        margin-bottom: 0.8rem;
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      h3 {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Bố cục Responsive Grid không dùng Container */
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        width: 100%;
+      }
+
+      @media (min-width: 992px) {
+        .main-grid {
+          grid-template-columns: 1fr 1.2fr;
+        }
+      }
+
+      /* Thiết kế Thẻ panel */
+      .card {
+        background-color: var(--bg-panel);
+        border: 2px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      }
+
+      /* Thể hiện trạng thái thư viện */
+      .status-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 2px solid var(--color-border);
+        background-color: #f1f5f9;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        font-weight: bold;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        border: 2px solid transparent;
+      }
+
+      .badge.online {
+        background-color: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+      }
+
+      .badge.offline {
+        background-color: #fef9c3;
+        color: #854d0e;
+        border-color: #fef08a;
+      }
+
+      /* Các bảng chọn cấu hình */
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+        font-size: 0.95rem;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 2px solid var(--color-border);
+        border-radius: 6px;
+        background-color: #ffffff;
+        font-family: var(--font-sans);
+        color: var(--text-primary);
+        outline: none;
+      }
+
+      .form-control:focus {
+        border-color: var(--color-primary);
+        outline: 2px solid rgba(2, 132, 199, 0.2);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      /* Nút nhấn */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-family: var(--font-sans);
+        font-weight: bold;
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+        user-select: none;
+        min-height: 44px; /* Touch target tối thiểu 44px */
+      }
+
+      .btn-primary {
+        background-color: var(--color-primary);
+        color: #ffffff;
+        border-color: var(--color-primary);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background-color: var(--color-primary-hover);
+        border-color: var(--color-primary-hover);
+      }
+
+      .btn-success {
+        background-color: var(--color-success);
+        color: #ffffff;
+        border-color: var(--color-success);
+      }
+
+      .btn-success:hover:not(:disabled) {
+        background-color: var(--color-success-hover);
+        border-color: var(--color-success-hover);
+      }
+
+      .btn-danger {
+        background-color: var(--color-danger);
+        color: #ffffff;
+        border-color: var(--color-danger);
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background-color: var(--color-danger-hover);
+        border-color: var(--color-danger-hover);
+      }
+
+      .btn-outline {
+        background-color: transparent;
+        color: var(--text-secondary);
+        border-color: var(--color-border);
+      }
+
+      .btn-outline:hover:not(:disabled) {
+        background-color: #f1f5f9;
+        color: var(--text-primary);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      /* Khu vực Kéo thả chuyển đổi tệp */
+      .dropzone {
+        border: 3px dashed var(--color-border);
+        border-radius: 8px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        background-color: #fafbfd;
+        cursor: pointer;
+        transition: border-color 0.2s, background-color 0.2s;
+        margin-bottom: 1rem;
+      }
+
+      .dropzone:hover {
+        border-color: var(--color-primary);
+        background-color: #f0f9ff;
+      }
+
+      .dropzone.dragover {
+        border-color: var(--color-success);
+        background-color: #f0fdf4;
+      }
+
+      .dropzone svg {
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      /* Danh sách tệp chuyển đổi */
+      .file-list-container {
+        border: 2px solid var(--color-border);
+        border-radius: 8px;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+        max-height: 18rem;
+      }
+
+      .file-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.95rem;
+      }
+
+      .file-table th {
+        background-color: #f1f5f9;
+        padding: 0.6rem;
+        font-weight: bold;
+        border-bottom: 2px solid var(--color-border);
+      }
+
+      .file-table td {
+        padding: 0.6rem;
+        border-bottom: 2px solid var(--color-border);
+        vertical-align: middle;
+      }
+
+      .file-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .progress-bar-container {
+        width: 100%;
+        height: 8px;
+        background-color: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.3rem;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background-color: var(--color-primary);
+        width: 0%;
+        transition: width 0.1s;
+      }
+
+      .progress-bar.success {
+        background-color: var(--color-success);
+      }
+
+      .saving-ratio {
+        color: var(--color-success);
+        font-weight: bold;
+      }
+
+      /* Trình phát âm thanh chi tiết */
+      .player-panel {
+        grid-column: 1 / -1;
+        background-color: var(--bg-panel);
+        border: 2px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+      }
+
+      .player-track-header {
+        font-weight: bold;
+        font-size: 1.15rem;
+        margin-bottom: 0.5rem;
+        color: var(--color-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .waveform-container {
+        width: 100%;
+        height: 6rem;
+        position: relative;
+        cursor: pointer;
+        margin-bottom: 0.8rem;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .waveform-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .player-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .audio-element {
+        width: 100%;
+        max-width: 25rem;
+        height: 32px;
+      }
+
+      /* Toast Notification */
+      .toast-container {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        pointer-events: none;
+      }
+
+      .toast {
+        background-color: #1e293b;
+        color: #ffffff;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid #475569;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        pointer-events: auto;
+        min-width: 18rem;
+        animation: slide-in 0.2s ease-out;
+      }
+
+      @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+
+      /* SVG Icon Sizing */
+      .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        stroke-width: 2px;
+        fill: none;
+        stroke: currentColor;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .icon-large {
+        width: 2rem;
+        height: 2rem;
+      }
+
+    </style>
+
+    <!-- Thư viện nén file ZIP & MP3 (Có cơ chế fallback) -->
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js" onerror="this.onerror=null; this.src='js/jszip.min.js';"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js" onerror="this.onerror=null; this.src='js/lame.min.js';"></script>
+  </head>
+  <body>
+
+    <!-- Tiêu đề chính h1 và Tác giả dưới h1 -->
+    <h1>Bộ Chuyển Đổi Âm Thanh Đa Định Dạng</h1>
+    <div class="author-title">D.T.Chánh</div>
+
+    <!-- Khối Grid chính gồm hai cột -->
+    <div class="main-grid">
+      
+      <!-- CỘT 1: Cấu hình và Ghi âm trực tiếp -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- THẺ 1: Cấu hình nén âm thanh -->
+        <div class="card" id="card-config">
+          <h2>
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Cấu hình đầu ra
+          </h2>
+
+          <div class="form-group">
+            <label for="config-format">Định dạng xuất ra (Format)</label>
+            <select id="config-format" class="form-control">
+              <option value="opus" selected>Opus (.opus) - Nén cao, chất lượng đỉnh</option>
+              <option value="mp3">MP3 (.mp3) - Phổ biến, tương thích tốt</option>
+              <option value="wav">WAV (.wav) - Âm thanh thô không nén</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="bitrate-group">
+            <label for="config-bitrate">Tốc độ truyền (Bitrate)</label>
+            <select id="config-bitrate" class="form-control">
+              <!-- Sẽ được điền động bằng JS dựa trên Format đang chọn -->
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label for="config-channels">Số kênh âm thanh (Channels)</label>
+              <select id="config-channels" class="form-control">
+                <option value="original" selected>Giữ nguyên gốc</option>
+                <option value="1">1 Kênh (Mono)</option>
+                <option value="2">2 Kênh (Stereo)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="flex: 1;">
+              <label for="config-samplerate">Tần số lấy mẫu (Sampling Rate)</label>
+              <select id="config-samplerate" class="form-control">
+                <option value="original" selected>Giữ nguyên gốc (Khuyên dùng)</option>
+                <option value="48000">48.000 Hz (48 kHz)</option>
+                <option value="44100">44.100 Hz (44.1 kHz)</option>
+                <option value="32000">32.000 Hz (32 kHz)</option>
+                <option value="24000">24.000 Hz (24 kHz)</option>
+                <option value="16000">16.000 Hz (16 kHz)</option>
+                <option value="8000">8.000 Hz (8 kHz)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="opus-only-options">
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label for="config-mode">Chế độ Bitrate (Bitrate Mode)</label>
+                <select id="config-mode" class="form-control">
+                  <option value="0" selected>VBR (Biến thiên hoàn toàn)</option>
+                  <option value="1">CVBR (Biến thiên có giới hạn)</option>
+                  <option value="2">CBR (Bitrate cố định)</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="flex: 1;">
+                <label for="config-complexity">Độ phức tạp thuật toán (Complexity)</label>
+                <select id="config-complexity" class="form-control">
+                  <option value="0">0 (Nhanh nhất)</option>
+                  <option value="3">3 (Trung bình thấp)</option>
+                  <option value="5">5 (Cân bằng)</option>
+                  <option value="8">8 (Chất lượng tốt)</option>
+                  <option value="10" selected>10 (Tối ưu tuyệt đối)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label for="config-bandwidth">Băng thông âm thanh (Audio Bandwidth)</label>
+                <select id="config-bandwidth" class="form-control">
+                  <option value="auto" selected>Fullband (20 kHz) - Tự động</option>
+                  <option value="superwide">Superwideband (12 kHz)</option>
+                  <option value="wide">Wideband (8 kHz)</option>
+                  <option value="narrow">Narrowband (4 kHz)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="flex: 1;">
+                <label for="config-framesize">Độ dài khung (Frame Size)</label>
+                <select id="config-framesize" class="form-control">
+                  <option value="2.5">2.5 ms</option>
+                  <option value="5">5 ms</option>
+                  <option value="10">10 ms</option>
+                  <option value="20" selected>20 ms (Khuyên dùng)</option>
+                  <option value="40">40 ms</option>
+                  <option value="60">60 ms</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label for="config-application">Mục đích sử dụng (Application Profile)</label>
+                <select id="config-application" class="form-control">
+                  <option value="2049" selected>Audio (Nhạc & âm thanh tổng hợp)</option>
+                  <option value="2048">Voice (Thoại chất lượng)</option>
+                  <option value="2051">Low Delay (Hạn chế độ trễ thấp)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CỘT 2: Chuyển đổi tệp tin -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- THẺ 3: Bộ chuyển đổi tệp tin âm thanh kéo thả -->
+        <div class="card" id="card-converter" style="height: 100%; display: flex; flex-direction: column;">
+          <h2>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            Chuyển đổi Tệp Âm thanh & Video ngoại tuyến
+          </h2>
+          
+          <!-- Vùng kéo thả tệp -->
+          <div class="dropzone" id="dropzone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-width="2"/>
+              <polyline points="14 2 14 8 20 8" stroke-width="2"/>
+              <line x1="12" y1="18" x2="12" y2="12" stroke-width="2"/>
+              <polyline points="9 15 12 12 15 15" stroke-width="2"/>
+            </svg>
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.3rem;">Kéo thả tệp âm thanh hoặc video vào đây</div>
+            <div style="font-size: 0.95rem; color: var(--text-secondary);">Hoặc nhấn để chọn tệp từ thiết bị của bạn</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Hỗ trợ: WAV, MP3, M4A, FLAC, OGG, AAC, MP4, MKV, MOV, WEBM...</div>
+            <input type="file" id="file-input" class="file-input" multiple accept="audio/*,video/*" />
+          </div>
+          
+          <!-- Danh sách tệp tin đã chọn -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h3>Danh sách hàng đợi chuyển đổi</h3>
+            <span id="queue-count" style="font-size: 0.95rem; font-weight: bold; color: var(--text-secondary);">0 tệp</span>
+          </div>
+          
+          <div class="file-list-container">
+            <table class="file-table" id="file-table">
+              <thead>
+                <tr>
+                  <th>Tên tệp tin</th>
+                  <th>Kích thước gốc</th>
+                  <th>Trạng thái & Tiến trình</th>
+                  <th>Kích thước mới</th>
+                  <th>Xoá</th>
+                </tr>
+              </thead>
+              <tbody id="file-table-body">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                    Chưa có tệp tin nào được chọn.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Bộ nút thao tác chuyển đổi -->
+          <div class="btn-group" style="margin-top: auto;">
+            <button id="btn-convert-start" class="btn btn-primary" disabled>
+              <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Bắt đầu chuyển đổi
+            </button>
+            <button id="btn-clear-queue" class="btn btn-outline" disabled>
+              <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Xoá danh sách
+            </button>
+            <button id="btn-download-zip" class="btn btn-outline" disabled>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Tải tệp ZIP tổng hợp
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- HÀNG TOÀN DIỆN PHÍA DƯỚI: Trình phát nhạc chi tiết và vẽ dạng sóng chi tiết -->
+      <div class="card player-panel" id="player-panel" style="display: none;">
+        <div class="player-track-header">
+          <svg class="icon icon-large text-primary" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span id="player-track-name">Tên tệp tin đang phát...</span>
+        </div>
+        
+        <!-- Sóng âm thanh SoundCloud-style -->
+        <div class="waveform-container" id="waveform-container" title="Click để tua nhanh">
+          <canvas id="waveform-canvas" class="waveform-canvas" height="96" width="900"></canvas>
+        </div>
+        
+        <div class="player-controls">
+          <span id="player-time" style="font-family: monospace; font-size: 1rem; font-weight: bold; color: var(--text-secondary);">
+            0:00 / 0:00
+          </span>
+          <audio id="main-audio-player" class="audio-element" controls></audio>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Container thông báo nổi -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- JavaScript Vanilla nguyên gốc, bắt lỗi đầy đủ -->
+    <script>
+      // Đường dẫn thư viện nén Opus (Cơ chế fallback sang thư viện cục bộ /js/ trong thư mục public)
+      let workerUrl = 'https://unpkg.com/opus-recorder@8.0.5/dist/encoderWorker.min.js';
+      
+      // Các biến trạng thái toàn cục
+      let audioContext = null;
+      
+      // Mảng lưu trữ
+      const conversionQueue = [];
+      let isConverting = false;
+      
+      // Trình phát nhạc hiện tại
+      let currentAudioUrl = null;
+      let currentAudioBuffer = null;
+      const audioPlayer = document.getElementById('main-audio-player');
+      const waveformCanvas = document.getElementById('waveform-canvas');
+      const waveformCtx = waveformCanvas.getContext('2d');
+      
+      // Đăng ký sự kiện khi tải trang
+      window.addEventListener('DOMContentLoaded', () => {
+        checkLibraries();
+        initConversionEvents();
+        initPlayerEvents();
+
+        // Khởi tạo trạng thái form cấu hình đầu ra
+        const configFormat = document.getElementById('config-format');
+        configFormat.addEventListener('change', updateConfigForm);
+        updateConfigForm();
+      });
+
+      // 1. KIỂM TRA THƯ VIỆN & CƠ CHẾ DỰ PHÒNG OFFLINE (FALLBACK)
+      async function checkLibraries() {
+        // Trì hoãn một chút để JSZip tải xong
+        if (typeof JSZip === 'undefined') {
+          console.warn("JSZip chưa được tải từ CDN, đang tải bản dự phòng cục bộ...");
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'js/jszip.min.js';
+            script.onload = () => {
+              console.log("Đã tải thành công JSZip dự phòng.");
+              resolve();
+            };
+            script.onerror = () => {
+              console.error("Không thể tải JSZip dự phòng!");
+              showToast("Không thể khởi động thư viện tạo tệp nén ZIP!", "danger");
+              resolve();
+            };
+            document.head.appendChild(script);
+          });
+        }
+
+        // Kiểm tra thư viện lamejs cho MP3
+        if (typeof lamejs === 'undefined') {
+          console.warn("lamejs chưa được tải từ CDN, đang tải bản dự phòng cục bộ...");
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'js/lame.min.js';
+            script.onload = () => {
+              console.log("Đã tải thành công lamejs dự phòng.");
+              resolve();
+            };
+            script.onerror = () => {
+              console.error("Không thể tải lamejs dự phòng!");
+              showToast("Không thể khởi động thư viện mã hoá MP3!", "danger");
+              resolve();
+            };
+            document.head.appendChild(script);
+          });
+        }
+
+        // Kiểm tra sự khả dụng của CDN unpkg bằng cách tải thử tệp JS của Worker
+        let cdnWorking = false;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 1800); // 1.8 giây tối đa
+          const response = await fetch(workerUrl, { method: 'HEAD', signal: controller.signal });
+          if (response.ok) {
+            cdnWorking = true;
+          }
+          clearTimeout(timeout);
+        } catch (err) {
+          console.warn("Không kết nối được CDN unpkg của Opus, chuyển sang dự phòng cục bộ.");
+        }
+
+        if (!cdnWorking) {
+          // Fallback toàn bộ sang tệp tin nội bộ trong thư mục /js/
+          workerUrl = 'js/encoderWorker.min.js';
+        }
+      }
+
+      // Helper tạo Worker hỗ trợ tránh chặn CORS khi chạy trên CDN
+      async function createWorker(workerScriptUrl) {
+        try {
+          // Tạo blob worker để tránh lỗi Security CORS khi load script từ CDN bên ngoài
+          const response = await fetch(workerScriptUrl);
+          if (!response.ok) throw new Error("Không thể tải tệp worker");
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          return new Worker(objectUrl);
+        } catch (err) {
+          console.warn("Lỗi tạo Blob Worker từ CDN, chuyển sang dùng Worker cục bộ directly: ", err);
+          return new Worker('js/encoderWorker.min.js');
+        }
+      }
+
+      // 2. CHUYỂN ĐỔI TỆP TIN ÂM THANH NGOẠI TUYẾN (AUDIO FILE CONVERTER)
+      function initConversionEvents() {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const btnStart = document.getElementById('btn-convert-start');
+        const btnClear = document.getElementById('btn-clear-queue');
+        const btnZip = document.getElementById('btn-download-zip');
+
+        // Mở tệp tin khi click vào dropzone
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) {
+            addFilesToQueue(Array.from(e.target.files));
+            fileInput.value = ''; // Reset để chọn lại cùng tệp nếu muốn
+          }
+        });
+
+        // Xử lý kéo thả tệp tin
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+          dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          if (e.dataTransfer.files.length > 0) {
+            addFilesToQueue(Array.from(e.dataTransfer.files));
+          }
+        });
+
+        btnStart.addEventListener('click', startAudioQueueConversion);
+        
+        btnClear.addEventListener('click', () => {
+          if (isConverting) return;
+          conversionQueue.length = 0;
+          renderConversionQueue();
+          showToast("Đã làm sạch hàng đợi chuyển đổi.", "outline");
+        });
+
+        btnZip.addEventListener('click', exportQueueToZip);
+      }
+
+      function addFilesToQueue(files) {
+        const format = document.getElementById('config-format').value;
+        files.forEach(file => {
+          // Lọc trùng tệp tin theo tên và dung lượng để tránh rác
+          const exists = conversionQueue.some(item => item.file.name === file.name && item.file.size === file.size);
+          if (exists) return;
+
+          const lastDot = file.name.lastIndexOf('.');
+          const baseName = lastDot === -1 ? file.name : file.name.substring(0, lastDot);
+
+          conversionQueue.push({
+            id: 'conv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            file: file,
+            status: 'chờ', // chờ, đang giải mã, đang xử lý âm thanh, đang mã hoá, xong, lỗi
+            progress: 0,
+            originalSize: file.size,
+            compressedSize: 0,
+            compressedBlob: null,
+            newName: `${baseName}.${format}`,
+            errorMsg: ''
+          });
+        });
+
+        renderConversionQueue();
+        showToast(`Đã thêm ${files.length} tệp tin vào hàng đợi.`, "success");
+      }
+
+      function updateConfigForm() {
+        const format = document.getElementById('config-format').value;
+        const bitrateGroup = document.getElementById('bitrate-group');
+        const bitrateSelect = document.getElementById('config-bitrate');
+        const opusOptions = document.getElementById('opus-only-options');
+        
+        if (format === 'opus') {
+          bitrateGroup.style.display = 'block';
+          opusOptions.style.display = 'block';
+          
+          // Điền options cho Opus
+          bitrateSelect.innerHTML = `
+            <option value="16000">16 kbps (Thoại nén cực cao)</option>
+            <option value="32000">32 kbps (Thoại chất lượng)</option>
+            <option value="64000">64 kbps (Tiêu chuẩn Mono)</option>
+            <option value="96000">96 kbps (Tiêu chuẩn Stereo)</option>
+            <option value="128000">128 kbps (Nhạc chất lượng)</option>
+            <option value="192000" selected>192 kbps (Chất lượng rất cao)</option>
+            <option value="256000">256 kbps (Cực đỉnh cao)</option>
+          `;
+        } else if (format === 'mp3') {
+          bitrateGroup.style.display = 'block';
+          opusOptions.style.display = 'none';
+          
+          // Điền options cho MP3 (320 kbps làm mặc định theo đúng yêu cầu người dùng)
+          bitrateSelect.innerHTML = `
+            <option value="64000">64 kbps</option>
+            <option value="96000">96 kbps</option>
+            <option value="128000">128 kbps</option>
+            <option value="192000">192 kbps (Chất lượng tốt)</option>
+            <option value="256000">256 kbps (Chất lượng rất tốt)</option>
+            <option value="320000" selected>320 kbps (Chất lượng tối ưu - Mặc định)</option>
+          `;
+        } else if (format === 'wav') {
+          bitrateGroup.style.display = 'none';
+          opusOptions.style.display = 'none';
+        }
+        
+        // Cập nhật phần mở rộng của các tệp đang chờ trong hàng đợi
+        updateQueueExtensions();
+      }
+
+      function updateQueueExtensions() {
+        const format = document.getElementById('config-format').value;
+        conversionQueue.forEach(item => {
+          if (item.status === 'chờ') {
+            const lastDot = item.file.name.lastIndexOf('.');
+            const baseName = lastDot === -1 ? item.file.name : item.file.name.substring(0, lastDot);
+            item.newName = `${baseName}.${format}`;
+          }
+        });
+        renderConversionQueue();
+      }
+
+      function renderConversionQueue() {
+        const tableBody = document.getElementById('file-table-body');
+        const queueCount = document.getElementById('queue-count');
+        const btnStart = document.getElementById('btn-convert-start');
+        const btnClear = document.getElementById('btn-clear-queue');
+        const btnZip = document.getElementById('btn-download-zip');
+
+        queueCount.textContent = `${conversionQueue.length} tệp`;
+
+        if (conversionQueue.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                Chưa có tệp tin nào được chọn.
+              </td>
+            </tr>
+          `;
+          btnStart.disabled = true;
+          btnClear.disabled = true;
+          btnZip.disabled = true;
+          return;
+        }
+
+        btnStart.disabled = isConverting;
+        btnClear.disabled = isConverting;
+        
+        // Chỉ bật nút ZIP khi có tối thiểu một tệp chuyển đổi hoàn tất
+        const hasConverted = conversionQueue.some(item => item.status === 'xong' && item.compressedBlob);
+        btnZip.disabled = hasConverted ? false : true;
+
+        tableBody.innerHTML = '';
+
+        conversionQueue.forEach((item, index) => {
+          const tr = document.createElement('tr');
+          
+          let statusHtml = '';
+          if (item.status === 'chờ') {
+            statusHtml = '<span style="color: var(--text-secondary);">Chờ chuyển đổi</span>';
+          } else if (item.status === 'đang giải mã') {
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary);">Đang đọc & giải mã tệp...</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: 15%; background-color: #60a5fa;"></div></div>
+            `;
+          } else if (item.status === 'đang xử lý âm thanh') {
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary);">Đang chuẩn hoá âm thanh...</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: 50%; background-color: #c084fc;"></div></div>
+            `;
+          } else if (item.status === 'đang mã hoá') {
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary);">Đang nén: ${item.progress}%</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: ${item.progress}%;"></div></div>
+            `;
+          } else if (item.status === 'xong') {
+            const saving = Math.round((1 - (item.compressedSize / item.originalSize)) * 100);
+            statusHtml = `
+              <span style="color: var(--color-success); font-weight: bold;">Hoàn thành</span>
+              <div class="progress-bar-container"><div class="progress-bar success" style="width: 100%;"></div></div>
+              <div style="font-size: 0.8rem; margin-top: 0.1rem;" class="saving-ratio">Giảm ${saving}% dung lượng!</div>
+            `;
+          } else if (item.status === 'lỗi') {
+            statusHtml = `<span style="color: var(--color-danger); font-weight: bold;" title="${item.errorMsg}">Lỗi xử lý</span>`;
+          }
+
+          let sizeNewHtml = '-';
+          if (item.status === 'xong') {
+            sizeNewHtml = `
+              <strong>${formatBytesVN(item.compressedSize)}</strong>
+              <button class="btn btn-outline btn-play-converted" style="padding: 0.2rem 0.4rem; min-height: auto; font-size: 0.8rem; margin-top: 0.3rem; display: block;" title="Phát âm thanh đã nén">
+                Phát
+              </button>
+            `;
+          }
+
+          let actionBtnHtml = '';
+          if (item.status === 'xong') {
+            actionBtnHtml = `
+              <button class="btn btn-outline btn-download-file" style="padding: 0.3rem 0.5rem; min-height: auto; color: var(--color-success);" title="Tải về tệp Opus này">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            `;
+          } else {
+            actionBtnHtml = `
+              <button class="btn btn-outline btn-delete-queue" style="padding: 0.3rem 0.5rem; min-height: auto; color: var(--color-danger);" ${isConverting ? 'disabled' : ''} title="Xoá khỏi danh sách">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            `;
+          }
+
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight: bold; word-break: break-all;">${item.file.name}</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.1rem;">Tệp nén: ${item.newName}</div>
+            </td>
+            <td>${formatBytesVN(item.originalSize)}</td>
+            <td>${statusHtml}</td>
+            <td>${sizeNewHtml}</td>
+            <td>
+              ${actionBtnHtml}
+            </td>
+          `;
+
+          // Gán hành động tương ứng dựa trên trạng thái tệp
+          if (item.status === 'xong') {
+            tr.querySelector('.btn-download-file').addEventListener('click', () => {
+              const url = URL.createObjectURL(item.compressedBlob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = item.newName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              showToast(`Đang tải về tệp tin: ${item.newName}`, "success");
+            });
+
+            tr.querySelector('.btn-play-converted').addEventListener('click', () => {
+              loadAudioPlayer(item.compressedBlob, item.newName);
+            });
+          } else {
+            tr.querySelector('.btn-delete-queue').addEventListener('click', () => {
+              conversionQueue.splice(index, 1);
+              renderConversionQueue();
+              showToast("Đã loại bỏ tệp tin khỏi danh sách.", "outline");
+            });
+          }
+
+          tableBody.appendChild(tr);
+        });
+      }
+
+      // Hàm tối ưu hoá tần số lấy mẫu và số kênh thông qua OfflineAudioContext (chạy cực nhanh bằng phần cứng trình duyệt)
+      async function resampleAudioBuffer(audioBuffer, targetSampleRate, targetChannels) {
+        if (audioBuffer.sampleRate === targetSampleRate && audioBuffer.numberOfChannels === targetChannels) {
+          return audioBuffer;
+        }
+
+        const duration = audioBuffer.duration;
+        const length = Math.ceil(duration * targetSampleRate);
+
+        const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+          targetChannels,
+          length,
+          targetSampleRate
+        );
+
+        const bufferSource = offlineCtx.createBufferSource();
+        bufferSource.buffer = audioBuffer;
+        bufferSource.connect(offlineCtx.destination);
+        bufferSource.start();
+
+        return await offlineCtx.startRendering();
+      }
+
+      // Xử lý nén chuỗi tệp xếp hàng nối tiếp
+      async function startAudioQueueConversion() {
+        if (isConverting || conversionQueue.length === 0) return;
+
+        isConverting = true;
+        renderConversionQueue();
+        showToast("Bắt đầu thực hiện chuyển đổi danh sách tệp tin...", "success");
+
+        const format = document.getElementById('config-format').value;
+        const bitrate = parseInt(document.getElementById('config-bitrate').value) || 192000;
+        const channelsVal = document.getElementById('config-channels').value;
+        const bitrateMode = parseInt(document.getElementById('config-mode').value) || 0;
+        const complexity = parseInt(document.getElementById('config-complexity').value) || 10;
+        const configSampleRateVal = document.getElementById('config-samplerate').value;
+        const frameSize = parseFloat(document.getElementById('config-framesize').value) || 20;
+        const application = parseInt(document.getElementById('config-application').value) || 2049;
+
+        for (let i = 0; i < conversionQueue.length; i++) {
+          const item = conversionQueue[i];
+          if (item.status === 'xong' || item.status === 'lỗi') continue; // Bỏ qua tệp đã xử lý
+
+          try {
+            item.status = 'đang giải mã';
+            renderConversionQueue();
+
+            // Khởi tạo AudioContext nếu cần
+            if (!audioContext) {
+              audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Giải mã tệp tin âm thanh thô bằng trình giải mã phần cứng trình duyệt (Hardware-accelerated)
+            const arrayBuffer = await item.file.arrayBuffer();
+            const decodedBuffer = await new Promise((resolve, reject) => {
+              audioContext.decodeAudioData(arrayBuffer, resolve, reject);
+            });
+
+            // Xác định số kênh (Giữ nguyên gốc hoặc chuyển đổi sang 1/2 kênh)
+            let itemChannels = decodedBuffer.numberOfChannels;
+            if (channelsVal !== 'original') {
+              itemChannels = parseInt(channelsVal) || 2;
+            }
+
+            // Xác định tần số lấy mẫu đích
+            let targetSampleRate = decodedBuffer.sampleRate;
+            if (configSampleRateVal !== 'original') {
+              targetSampleRate = parseInt(configSampleRateVal) || 48000;
+            } else {
+              if (format === 'opus') {
+                // Nếu giữ nguyên gốc, Opus chỉ hỗ trợ các tần số lấy mẫu chuẩn: 8000, 12000, 16000, 24000, 48000 Hz.
+                // Nếu gốc là 44.1 kHz hoặc tần số không chuẩn khác, ta tự động đưa về chuẩn 48 kHz để giữ chất lượng tốt nhất.
+                const supportedOpusRates = [8000, 12000, 16000, 24000, 48000];
+                if (!supportedOpusRates.includes(decodedBuffer.sampleRate)) {
+                  targetSampleRate = 48000;
+                }
+              }
+            }
+
+            // Tiến hành chuyển đổi tần số lấy mẫu (Resampling) & số kênh về cấu hình đích bằng OfflineAudioContext của trình duyệt
+            item.status = 'đang xử lý âm thanh';
+            renderConversionQueue();
+            const resampledBuffer = await resampleAudioBuffer(decodedBuffer, targetSampleRate, itemChannels);
+
+            item.status = 'đang mã hoá';
+            item.progress = 0;
+            renderConversionQueue();
+
+            let compressedBlob = null;
+            if (format === 'opus') {
+              // Thực hiện nén sang Ogg Opus chất lượng cao dùng mã WASM trong Worker
+              compressedBlob = await encodeAudioBufferToOpus(
+                resampledBuffer,
+                {
+                  encoderBitRate: bitrate,
+                  numberOfChannels: itemChannels,
+                  encoderSampleRate: targetSampleRate,
+                  encoderComplexity: complexity,
+                  encoderFrameSize: frameSize,
+                  encoderApplication: application,
+                  bitrateMode: bitrateMode
+                },
+                (progress) => {
+                  item.progress = progress;
+                  renderConversionQueue();
+                }
+              );
+            } else if (format === 'mp3') {
+              // Thực hiện nén sang MP3 sử dụng lamejs ngoại tuyến
+              const targetBitrateKbps = bitrate / 1000; // Bitrate lấy theo kbps (ví dụ 320)
+              compressedBlob = await encodeAudioBufferToMp3(
+                resampledBuffer,
+                targetBitrateKbps,
+                (progress) => {
+                  item.progress = progress;
+                  renderConversionQueue();
+                }
+              );
+            } else if (format === 'wav') {
+              // Thực hiện đóng gói sang WAV không nén
+              compressedBlob = encodeAudioBufferToWav(resampledBuffer);
+              item.progress = 100;
+              renderConversionQueue();
+            }
+
+            item.status = 'xong';
+            item.compressedBlob = compressedBlob;
+            item.compressedSize = compressedBlob.size;
+            renderConversionQueue();
+
+          } catch (err) {
+            console.error("Lỗi chuyển đổi tệp: " + item.file.name, err);
+            item.status = 'lỗi';
+            let errMsg = err.message || 'Không thể giải mã dữ liệu âm thanh';
+            if (errMsg.toLowerCase().includes('decode') || errMsg.toLowerCase().includes('fail') || errMsg.toLowerCase().includes('null') || errMsg.toLowerCase().includes('error')) {
+              errMsg = 'Không thể giải mã (tệp không chứa luồng âm thanh, hoặc định dạng này không được trình duyệt hỗ trợ)';
+            }
+            item.errorMsg = errMsg;
+            renderConversionQueue();
+            showToast(`Lỗi xử lý tệp ${item.file.name}: ${item.errorMsg}`, "danger");
+          }
+        }
+
+        isConverting = false;
+        renderConversionQueue();
+        showToast("Quá trình chuyển đổi toàn bộ danh sách kết thúc!", "success");
+      }
+
+      // Hàm giải mã cốt lõi nén dữ liệu từ AudioBuffer sang Opus
+      function encodeAudioBufferToOpus(audioBuffer, options, onProgress) {
+        return new Promise(async (resolve, reject) => {
+          let worker = null;
+          try {
+            worker = await createWorker(workerUrl);
+            const chunks = [];
+            const numChannels = Math.min(options.numberOfChannels, audioBuffer.numberOfChannels);
+
+            worker.onmessage = function(e) {
+              if (e.data && e.data.page) {
+                chunks.push(e.data.page);
+              } else if (e.data && e.data.message === 'done') {
+                const blob = new Blob(chunks, { type: 'audio/ogg' });
+                console.log("Mã hoá Opus hoàn tất. Tổng số trang Ogg:", chunks.length, "Dung lượng tệp:", blob.size, "bytes");
+                worker.terminate();
+                resolve(blob);
+              } else if (e.data && e.data.message === 'ready') {
+                // Bắt buộc phải yêu cầu các trang tiêu đề (getHeaderPages) để tệp Ogg Opus hợp lệ và có thể phát được
+                worker.postMessage({ command: 'getHeaderPages' });
+
+                // Khởi động đẩy dữ liệu bằng kỹ thuật truyền chuyển giao (Transferable Objects) để tối ưu bộ nhớ triệt để
+                const rawPCM = [];
+                for (let c = 0; c < numChannels; c++) {
+                  rawPCM.push(audioBuffer.getChannelData(c));
+                }
+
+                const totalSamples = audioBuffer.length;
+                const chunkSize = 65536; // Phân đoạn tối ưu (1.36 giây tại 48kHz), tuyệt đối an toàn với bộ nhớ WASM và cực kỳ nhanh
+                let offset = 0;
+
+                // Sử dụng MessageChannel để lập lịch cho các tác vụ với độ trễ bằng 0 (Zero-delay macro-task scheduling)
+                // giúp chạy tốc độ tối đa của luồng CPU nền mà không làm nghẽn giao diện người dùng
+                const channel = new MessageChannel();
+                channel.port1.onmessage = function() {
+                  sendChunksChunk();
+                };
+
+                function sendChunksChunk() {
+                  if (offset < totalSamples) {
+                    const chunkBuffers = [];
+                    const size = Math.min(chunkSize, totalSamples - offset);
+                    
+                    for (let c = 0; c < numChannels; c++) {
+                      // Tạo Float32Array mới bằng phương thức slice() để sao chép dữ liệu độc lập,
+                      // giúp tách biệt ArrayBuffer của phân đoạn này, đảm bảo khi chuyển giao Transferable
+                      // không làm ảnh hưởng (neutered/detached) đến mảng dữ liệu gốc
+                      const slice = rawPCM[c].slice(offset, offset + size);
+                      chunkBuffers.push(slice);
+                    }
+
+                    // Sử dụng Transferable list để chuyển đổi quyền sở hữu bộ nhớ ArrayBuffer sang Worker với độ phức tạp O(1)
+                    worker.postMessage({
+                      command: 'encode',
+                      buffers: chunkBuffers
+                    }, chunkBuffers.map(b => b.buffer));
+
+                    offset += size;
+                    if (onProgress) {
+                      onProgress(Math.round((offset / totalSamples) * 100));
+                    }
+
+                    // Kích hoạt tác vụ kế tiếp bằng macro-task không độ trễ
+                    channel.port2.postMessage(null);
+                  } else {
+                    worker.postMessage({ command: 'done' });
+                  }
+                }
+
+                sendChunksChunk();
+              }
+            };
+
+            worker.onerror = function(err) {
+              if (worker) worker.terminate();
+              reject(err);
+            };
+
+            // Khởi chạy khởi tạo cấu hình Worker
+            worker.postMessage({
+              command: 'init',
+              originalSampleRate: audioBuffer.sampleRate,
+              numberOfChannels: numChannels,
+              encoderSampleRate: options.encoderSampleRate || 48000,
+              encoderBitRate: options.encoderBitRate || 192000,
+              encoderComplexity: options.encoderComplexity !== undefined ? options.encoderComplexity : 10,
+              encoderFrameSize: options.encoderFrameSize || 20,
+              encoderApplication: options.encoderApplication || 2049,
+              maxBitsPerSecond: options.encoderBitRate || 192000,
+              bitrateMode: options.bitrateMode !== undefined ? options.bitrateMode : 0,
+              complexity: options.encoderComplexity !== undefined ? options.encoderComplexity : 10
+            });
+
+          } catch (err) {
+            if (worker) worker.terminate();
+            reject(err);
+          }
+        });
+      }
+
+      // Hàm chuyển đổi dữ liệu từ AudioBuffer sang tệp âm thanh WAV không nén (PCM Int16)
+      function encodeAudioBufferToWav(audioBuffer) {
+        const numOfChan = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const format = 1; // 1 = Raw LPCM (16-bit Int)
+        const bitDepth = 16;
+        
+        let result;
+        if (numOfChan === 2) {
+          result = interleave(audioBuffer.getChannelData(0), audioBuffer.getChannelData(1));
+        } else {
+          result = audioBuffer.getChannelData(0);
+        }
+        
+        const buffer = new ArrayBuffer(44 + result.length * 2);
+        const view = new DataView(buffer);
+        
+        /* RIFF identifier */
+        writeString(view, 0, 'RIFF');
+        /* file length */
+        view.setUint32(4, 36 + result.length * 2, true);
+        /* RIFF type */
+        writeString(view, 8, 'WAVE');
+        /* format chunk identifier */
+        writeString(view, 12, 'fmt ');
+        /* format chunk length */
+        view.setUint32(16, 16, true);
+        /* sample format (raw) */
+        view.setUint16(20, format, true);
+        /* channel count */
+        view.setUint16(22, numOfChan, true);
+        /* sample rate */
+        view.setUint32(24, sampleRate, true);
+        /* byte rate (sample rate * block align) */
+        view.setUint32(28, sampleRate * numOfChan * (bitDepth / 8), true);
+        /* block align (channel count * bytes per sample) */
+        view.setUint16(32, numOfChan * (bitDepth / 8), true);
+        /* bits per sample */
+        view.setUint16(34, bitDepth, true);
+        /* data chunk identifier */
+        writeString(view, 36, 'data');
+        /* data chunk length */
+        view.setUint32(40, result.length * 2, true);
+        
+        // Ghi mẫu dữ liệu âm thanh PCM
+        floatTo16BitPCM(view, 44, result);
+        
+        return new Blob([view], { type: 'audio/wav' });
+      }
+
+      function interleave(inputL, inputR) {
+        const length = inputL.length + inputR.length;
+        const result = new Float32Array(length);
+        let index = 0;
+        let inputIndex = 0;
+        
+        while (index < length) {
+          result[index++] = inputL[inputIndex];
+          result[index++] = inputR[inputIndex];
+          inputIndex++;
+        }
+        return result;
+      }
+
+      function floatTo16BitPCM(output, offset, input) {
+        for (let i = 0; i < input.length; i++, offset += 2) {
+          let s = Math.max(-1, Math.min(1, input[i]));
+          output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+      }
+
+      function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      }
+
+      // Hàm mã hoá dữ liệu âm thanh từ AudioBuffer sang MP3 sử dụng lamejs ngoại tuyến
+      function encodeAudioBufferToMp3(audioBuffer, targetBitrateKbps, onProgress) {
+        return new Promise((resolve, reject) => {
+          try {
+            const channels = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+            
+            // Khởi tạo bộ mã hoá từ lamejs
+            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, targetBitrateKbps);
+            const mp3Data = [];
+            
+            const totalSamples = audioBuffer.length;
+            const chunkSize = 1152 * 10; // lamejs hoạt động tốt nhất với bội số của 1152
+            let offset = 0;
+            
+            const leftChannelFloat = audioBuffer.getChannelData(0);
+            const rightChannelFloat = channels > 1 ? audioBuffer.getChannelData(1) : null;
+            
+            const channel = new MessageChannel();
+            channel.port1.onmessage = function() {
+              encodeChunk();
+            };
+            
+            function encodeChunk() {
+              if (offset < totalSamples) {
+                const length = Math.min(chunkSize, totalSamples - offset);
+                
+                // Chuyển Float32 sang Int16Array
+                const leftInt16 = new Int16Array(length);
+                for (let i = 0; i < length; i++) {
+                  let s = Math.max(-1, Math.min(1, leftChannelFloat[offset + i]));
+                  leftInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+                
+                let mp3tmp;
+                if (channels > 1) {
+                  const rightInt16 = new Int16Array(length);
+                  for (let i = 0; i < length; i++) {
+                    let s = Math.max(-1, Math.min(1, rightChannelFloat[offset + i]));
+                    rightInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                  }
+                  mp3tmp = mp3encoder.encodeBuffer(leftInt16, rightInt16);
+                } else {
+                  mp3tmp = mp3encoder.encodeBuffer(leftInt16);
+                }
+                
+                if (mp3tmp.length > 0) {
+                  mp3Data.push(mp3tmp);
+                }
+                
+                offset += length;
+                if (onProgress) {
+                  onProgress(Math.round((offset / totalSamples) * 100));
+                }
+                
+                // Lên lịch xử lý phân đoạn kế tiếp
+                channel.port2.postMessage(null);
+              } else {
+                // Hoàn thành mã hoá và xả bộ đệm nén (flush)
+                const mp3tmp = mp3encoder.flush();
+                if (mp3tmp.length > 0) {
+                  mp3Data.push(mp3tmp);
+                }
+                const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                resolve(blob);
+              }
+            }
+            
+            // Kích hoạt phân đoạn đầu tiên
+            channel.port2.postMessage(null);
+            
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+
+      // Tự động đóng gói tất cả các tệp chuyển đổi hoàn tất thành tệp ZIP
+      async function exportQueueToZip() {
+        const completedItems = conversionQueue.filter(item => item.status === 'xong' && item.compressedBlob);
+        if (completedItems.length === 0) {
+          showToast("Chưa có tệp tin nào chuyển đổi hoàn thành để tạo ZIP!", "outline");
+          return;
+        }
+
+        if (typeof JSZip === 'undefined') {
+          showToast("Hệ thống nén ZIP đang bận hoặc chưa tải xong!", "danger");
+          return;
+        }
+
+        try {
+          showToast("Đang nén tệp tin và chuẩn bị tải ZIP...", "success");
+          const zip = new JSZip();
+          
+          completedItems.forEach(item => {
+            zip.file(item.newName, item.compressedBlob);
+          });
+
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          const dateStr = formatDateForFilename(new Date());
+          triggerFileDownload(zipBlob, `Opus_Nen_Tong_Hop_${dateStr}.zip`);
+          showToast("Đã tải tệp ZIP thành công!", "success");
+        } catch (err) {
+          console.error(err);
+          showToast("Thất bại khi đóng gói ZIP: " + err.message, "danger");
+        }
+      }
+
+      // 5. TRÌNH PHÁT AM THANH & HIỂN THỊ DẠNG SÓNG CHI TIẾT
+      function initPlayerEvents() {
+        const player = document.getElementById('main-audio-player');
+        
+        player.addEventListener('timeupdate', () => {
+          updateAudioPlayerTime();
+        });
+
+        player.addEventListener('loadedmetadata', () => {
+          updateAudioPlayerTime();
+        });
+
+        // Tua nhạc khi click lên thanh Waveform Canvas
+        const container = document.getElementById('waveform-container');
+        container.addEventListener('click', (e) => {
+          if (!player.duration || !currentAudioBuffer) return;
+          
+          const rect = waveformCanvas.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const percentage = clickX / rect.width;
+          
+          player.currentTime = percentage * player.duration;
+          updateAudioPlayerTime();
+        });
+      }
+
+      function loadAudioPlayer(blob, filename) {
+        if (currentAudioUrl) {
+          URL.revokeObjectURL(currentAudioUrl);
+        }
+
+        currentAudioUrl = URL.createObjectURL(blob);
+        audioPlayer.src = currentAudioUrl;
+        
+        document.getElementById('player-track-name').textContent = filename;
+        document.getElementById('player-panel').style.display = 'block';
+        
+        // Cuộn màn hình tới trình phát nhạc
+        document.getElementById('player-panel').scrollIntoView({ behavior: 'smooth' });
+
+        // Phân tích và vẽ dạng sóng âm thanh
+        decodeAudioForVisualWaveform(blob);
+        
+        // Tự động phát âm thanh
+        audioPlayer.play().catch(err => console.log("Chặn tự động phát: " + err.message));
+      }
+
+      async function decodeAudioForVisualWaveform(blob) {
+        const width = waveformCanvas.width;
+        const height = waveformCanvas.height;
+
+        // Vẽ trạng thái chờ giải mã sóng
+        waveformCtx.fillStyle = '#fafafa';
+        waveformCtx.fillRect(0, 0, width, height);
+        waveformCtx.strokeStyle = '#cbd5e1';
+        waveformCtx.lineWidth = 2;
+        waveformCtx.beginPath();
+        waveformCtx.moveTo(0, height / 2);
+        waveformCtx.lineTo(width, height / 2);
+        waveformCtx.stroke();
+        
+        waveformCtx.fillStyle = '#475569';
+        waveformCtx.font = '14px system-ui';
+        waveformCtx.textAlign = 'center';
+        waveformCtx.fillText('Đang đọc cấu trúc và vẽ dạng sóng âm thanh...', width / 2, height / 2 + 5);
+
+        try {
+          if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+
+          const arrayBuffer = await blob.arrayBuffer();
+          const bufferCopy = arrayBuffer.slice(0); // Nhân bản tránh rác nhớ
+
+          audioContext.decodeAudioData(bufferCopy, (decodedBuffer) => {
+            currentAudioBuffer = decodedBuffer;
+            drawStaticWaveform(decodedBuffer);
+          }, (err) => {
+            console.warn("Dạng sóng chi tiết chưa được hỗ trợ giải mã bởi trình duyệt: " + err.message);
+            currentAudioBuffer = null;
+            drawFallbackStaticWave();
+          });
+
+        } catch (err) {
+          console.error(err);
+          currentAudioBuffer = null;
+          drawFallbackStaticWave();
+        }
+      }
+
+      function drawStaticWaveform(audioBuffer) {
+        const width = waveformCanvas.width;
+        const height = waveformCanvas.height;
+        waveformCtx.clearRect(0, 0, width, height);
+
+        // Nền cơ bản của sóng âm
+        waveformCtx.fillStyle = '#fafafa';
+        waveformCtx.fillRect(0, 0, width, height);
+
+        // Đường viền ngang phân chia sóng thanh nhã
+        waveformCtx.strokeStyle = '#e2e8f0';
+        waveformCtx.lineWidth = 2;
+        waveformCtx.beginPath();
+        waveformCtx.moveTo(0, 0);
+        waveformCtx.lineTo(width, 0);
+        waveformCtx.moveTo(0, height);
+        waveformCtx.lineTo(width, height);
+        waveformCtx.stroke();
+
+        const channelData = audioBuffer.getChannelData(0);
+        const step = Math.ceil(channelData.length / width);
+        const amp = height / 2.3; // Chừa lề tránh kịch trần
+
+        waveformCtx.fillStyle = '#0284c7'; // Màu xanh dương cho sóng chính
+
+        for (let i = 0; i < width; i++) {
+          let min = 1.0;
+          let max = -1.0;
+          
+          for (let j = 0; j < step; j++) {
+            const index = i * step + j;
+            if (index >= channelData.length) break;
+            const datum = channelData[index];
+            if (datum < min) min = datum;
+            if (datum > max) max = datum;
+          }
+
+          const y1 = (1 + min) * amp;
+          const y2 = (1 + max) * amp;
+          const barHeight = Math.max(2, y2 - y1);
+          
+          // Vẽ thanh sóng kép cách nhau tinh tế
+          waveformCtx.fillRect(i, y1 + (height - amp * 2) / 2, 2, barHeight);
+        }
+      }
+
+      function drawFallbackStaticWave() {
+        const width = waveformCanvas.width;
+        const height = waveformCanvas.height;
+        waveformCtx.clearRect(0, 0, width, height);
+        
+        waveformCtx.fillStyle = '#fafafa';
+        waveformCtx.fillRect(0, 0, width, height);
+        
+        waveformCtx.strokeStyle = '#0284c7';
+        waveformCtx.lineWidth = 2;
+        waveformCtx.beginPath();
+        waveformCtx.moveTo(0, height / 2);
+        waveformCtx.lineTo(width, height / 2);
+        waveformCtx.stroke();
+        
+        waveformCtx.fillStyle = '#475569';
+        waveformCtx.font = '13px system-ui';
+        waveformCtx.textAlign = 'center';
+        waveformCtx.fillText('Trình phát âm thanh đã sẵn sàng (Định dạng nén độc quyền)', width / 2, height / 2 - 10);
+      }
+
+      function updateAudioPlayerTime() {
+        const timeDisplay = document.getElementById('player-time');
+        
+        const curTime = formatSeconds(audioPlayer.currentTime);
+        const duration = isNaN(audioPlayer.duration) ? '0:00' : formatSeconds(audioPlayer.duration);
+        timeDisplay.textContent = `${curTime} / ${duration}`;
+
+        // Cập nhật lướt màu và vạch đỏ định vị thanh dạng sóng SoundCloud
+        if (currentAudioBuffer) {
+          const width = waveformCanvas.width;
+          const height = waveformCanvas.height;
+          const progress = audioPlayer.duration ? (audioPlayer.currentTime / audioPlayer.duration) : 0;
+
+          // Vẽ lại sóng tĩnh nguyên bản
+          drawStaticWaveform(currentAudioBuffer);
+
+          // Phủ mờ một lớp màu xanh ấm áp lên phần nhạc đã phát qua
+          waveformCtx.fillStyle = 'rgba(2, 132, 199, 0.3)';
+          waveformCtx.fillRect(0, 0, width * progress, height);
+
+          // Vẽ vạch định vị màu đỏ sắc nét
+          waveformCtx.strokeStyle = '#ef4444';
+          waveformCtx.lineWidth = 2;
+          waveformCtx.beginPath();
+          waveformCtx.moveTo(width * progress, 0);
+          waveformCtx.lineTo(width * progress, height);
+          waveformCtx.stroke();
+        }
+      }
+
+      // 6. CÁC HÀM TIỆN ÍCH CHUNG (UTILITIES)
+      function triggerFileDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function formatBytesVN(bytes) {
+        if (bytes === 0) return '0 Byte';
+        const k = 1024;
+        const dm = 2;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const num = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+        
+        // Thay dấu chấm thập phân bằng dấu phẩy theo chuẩn Việt Nam
+        return num.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: dm }) + ' ' + sizes[i];
+      }
+
+      function formatDateVN(date) {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hr = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const sec = String(d.getSeconds()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hr}:${min}:${sec}`;
+      }
+
+      function formatDateForFilename(date) {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hr = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const sec = String(d.getSeconds()).padStart(2, '0');
+        return `${day}_${month}_${year}_${hr}_${min}_${sec}`;
+      }
+
+      function formatSeconds(secNum) {
+        const secs = Math.floor(secNum % 60);
+        const mins = Math.floor((secNum / 60) % 60);
+        const hrs = Math.floor(secNum / 3600);
+
+        if (hrs > 0) {
+          return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+        return `${mins}:${String(secs).padStart(2, '0')}`;
+      }
+
+      // Hệ thống hiển thị Toast thông báo thanh lịch
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let iconHtml = '';
+        if (type === 'success') {
+          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #4ade80;"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (type === 'danger') {
+          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #f87171;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        } else {
+          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #94a3b8;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+        }
+
+        toast.innerHTML = `
+          ${iconHtml}
+          <div style="font-size: 0.95rem; font-weight: bold;">${message}</div>
+        `;
+
+        container.appendChild(toast);
+
+        // Tự biến mất sau 3.5 giây
+        setTimeout(() => {
+          toast.style.animation = 'slide-out 0.2s ease-in forwards';
+          toast.addEventListener('animationend', () => {
+            toast.remove();
+          });
+        }, 3500);
+      }
+    </script>
+
+    <!-- Style cho hiệu ứng slide-out biến mất của toast -->
+    <style>
+      @keyframes slide-out {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    </style>
+  </body>
+</html>
