@@ -98,6 +98,8 @@
         border-radius: 12px;
         padding: 1rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        min-width: 0;
+        width: 100%;
       }
 
       /* Thể hiện trạng thái thư viện */
@@ -284,6 +286,7 @@
         overflow-x: auto;
         margin-bottom: 1rem;
         max-height: 18rem;
+        width: 100%;
       }
 
       .file-table {
@@ -433,6 +436,18 @@
         height: 2rem;
       }
 
+      @media (max-width: 576px) {
+        .toast-container {
+          right: 0.5rem;
+          left: 0.5rem;
+          bottom: 1rem;
+        }
+        .toast {
+          min-width: 0;
+          width: 100%;
+        }
+      }
+
     </style>
 
     <!-- Thư viện nén file ZIP & MP3 (Có cơ chế fallback) -->
@@ -449,7 +464,7 @@
     <div class="main-grid">
       
       <!-- CỘT 1: Cấu hình và Ghi âm trực tiếp -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="display: flex; flex-direction: column; gap: 1rem; min-width: 0; width: 100%;">
         
         <!-- THẺ 1: Cấu hình nén âm thanh -->
         <div class="card" id="card-config">
@@ -560,7 +575,7 @@
       </div>
       
       <!-- CỘT 2: Chuyển đổi tệp tin -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="display: flex; flex-direction: column; gap: 1rem; min-width: 0; width: 100%;">
         
         <!-- THẺ 3: Bộ chuyển đổi tệp tin âm thanh kéo thả -->
         <div class="card" id="card-converter" style="height: 100%; display: flex; flex-direction: column;">
@@ -593,11 +608,11 @@
             <table class="file-table" id="file-table">
               <thead>
                 <tr>
-                  <th>Tên tệp tin</th>
-                  <th>Kích thước gốc</th>
-                  <th>Trạng thái & Tiến trình</th>
-                  <th>Kích thước mới</th>
-                  <th>Xoá</th>
+                  <th style="min-width: 10rem;">Tên tệp tin</th>
+                  <th style="min-width: 5rem;">Kích thước gốc</th>
+                  <th style="min-width: 8rem;">Trạng thái & Tiến trình</th>
+                  <th style="min-width: 6rem;">Kích thước mới</th>
+                  <th style="min-width: 3rem; text-align: center;">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="file-table-body">
@@ -671,6 +686,7 @@
       const audioPlayer = document.getElementById('main-audio-player');
       const waveformCanvas = document.getElementById('waveform-canvas');
       const waveformCtx = waveformCanvas.getContext('2d');
+      let currentPlayerTrackDuration = 0; // Lưu trữ thời lượng của tệp tin đang phát để hiển thị chính xác trên mọi trình duyệt
       
       // Đăng ký sự kiện khi tải trang
       window.addEventListener('DOMContentLoaded', () => {
@@ -759,7 +775,7 @@
         }
       }
 
-      // 2. CHUYỂN ĐỔI TỆP TIN ÂM THANH (AUDIO FILE CONVERTER)
+      // 2. CHUYỂN ĐỔI TỆP TIN ÂM THANH NGOẠI TUYẾN (AUDIO FILE CONVERTER)
       function initConversionEvents() {
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('file-input');
@@ -1005,7 +1021,7 @@
             });
 
             tr.querySelector('.btn-play-converted').addEventListener('click', () => {
-              loadAudioPlayer(item.compressedBlob, item.newName);
+              loadAudioPlayer(item.compressedBlob, item.newName, item.duration);
             });
           } else {
             tr.querySelector('.btn-delete-queue').addEventListener('click', () => {
@@ -1077,6 +1093,9 @@
             const decodedBuffer = await new Promise((resolve, reject) => {
               audioContext.decodeAudioData(arrayBuffer, resolve, reject);
             });
+
+            // Lưu trữ thời lượng gốc phục vụ cho việc hiển thị & phát lại chính xác
+            item.duration = decodedBuffer.duration;
 
             // Xác định số kênh (Giữ nguyên gốc hoặc chuyển đổi sang 1/2 kênh)
             let itemChannels = decodedBuffer.numberOfChannels;
@@ -1249,6 +1268,7 @@
             // Khởi chạy khởi tạo cấu hình Worker
             worker.postMessage({
               command: 'init',
+              wavSampleRate: audioBuffer.sampleRate,
               originalSampleRate: audioBuffer.sampleRate,
               numberOfChannels: numChannels,
               encoderSampleRate: options.encoderSampleRate || 48000,
@@ -1468,39 +1488,53 @@
         // Tua nhạc khi click lên thanh Waveform Canvas
         const container = document.getElementById('waveform-container');
         container.addEventListener('click', (e) => {
-          if (!player.duration || !currentAudioBuffer) return;
+          let durationSec = player.duration;
+          if (isNaN(durationSec) || !isFinite(durationSec)) {
+            if (currentAudioBuffer) {
+              durationSec = currentAudioBuffer.duration;
+            } else if (typeof currentPlayerTrackDuration === 'number' && currentPlayerTrackDuration > 0) {
+              durationSec = currentPlayerTrackDuration;
+            }
+          }
+          
+          if (!durationSec || isNaN(durationSec)) return;
           
           const rect = waveformCanvas.getBoundingClientRect();
           const clickX = e.clientX - rect.left;
           const percentage = clickX / rect.width;
           
-          player.currentTime = percentage * player.duration;
+          player.currentTime = percentage * durationSec;
           updateAudioPlayerTime();
         });
       }
 
-      function loadAudioPlayer(blob, filename) {
+      function loadAudioPlayer(blob, filename, duration = 0) {
         if (currentAudioUrl) {
           URL.revokeObjectURL(currentAudioUrl);
+          currentAudioUrl = null;
         }
 
-        currentAudioUrl = URL.createObjectURL(blob);
-        audioPlayer.src = currentAudioUrl;
+        currentPlayerTrackDuration = duration; // Lưu lại thời lượng gốc phục vụ hiển thị trên Firefox
+        currentAudioBuffer = null;
         
+        // Tạm dừng trình phát hiện tại và dọn dẹp nguồn phát cũ
+        audioPlayer.pause();
+        audioPlayer.src = '';
+
         document.getElementById('player-track-name').textContent = filename;
         document.getElementById('player-panel').style.display = 'block';
+        
+        // Cập nhật giao diện thời gian hiển thị ban đầu ngay lập tức
+        updateAudioPlayerTime();
         
         // Cuộn màn hình tới trình phát nhạc
         document.getElementById('player-panel').scrollIntoView({ behavior: 'smooth' });
 
-        // Phân tích và vẽ dạng sóng âm thanh
-        decodeAudioForVisualWaveform(blob);
-        
-        // Tự động phát âm thanh
-        audioPlayer.play().catch(err => console.log("Chặn tự động phát: " + err.message));
+        // Phân tích dạng sóng và thiết lập luồng phát an toàn cho mọi trình duyệt
+        decodeAudioAndSetupPlayback(blob, filename);
       }
 
-      async function decodeAudioForVisualWaveform(blob) {
+      async function decodeAudioAndSetupPlayback(blob, filename) {
         const width = waveformCanvas.width;
         const height = waveformCanvas.height;
 
@@ -1525,21 +1559,62 @@
           }
 
           const arrayBuffer = await blob.arrayBuffer();
-          const bufferCopy = arrayBuffer.slice(0); // Nhân bản tránh rác nhớ
+          const bufferCopy = arrayBuffer.slice(0); // Nhân bản tránh rác bộ nhớ
 
           audioContext.decodeAudioData(bufferCopy, (decodedBuffer) => {
             currentAudioBuffer = decodedBuffer;
+            currentPlayerTrackDuration = decodedBuffer.duration; // Lưu lại thời lượng chính xác nhất từ AudioBuffer
+            
+            // Vẽ lại sóng tĩnh nguyên bản thực tế
             drawStaticWaveform(decodedBuffer);
+
+            // Kiểm tra xem có phải định dạng Opus hoặc Ogg không
+            const nameLower = filename.toLowerCase();
+            const isOpus = nameLower.endsWith('.opus') || nameLower.endsWith('.ogg');
+
+            if (isOpus) {
+              // Đối với định dạng Opus/Ogg, Firefox và một số trình duyệt khác bị kẹt do cấu trúc Ogg không có Seek Index.
+              // Chúng ta chuyển đổi cực nhanh sang tệp WAV thô tạm thời trong bộ nhớ để phát lại mượt mà 100% với hiển thị thời lượng chuẩn.
+              console.log("Phát hiện định dạng nén Opus. Tạo dữ liệu WAV tạm thời để tương thích hoàn hảo trên Firefox.");
+              try {
+                const wavBlob = encodeAudioBufferToWav(decodedBuffer);
+                currentAudioUrl = URL.createObjectURL(wavBlob);
+              } catch (wavErr) {
+                console.error("Lỗi tạo tệp WAV tạm thời, chuyển sang dùng Blob gốc:", wavErr);
+                currentAudioUrl = URL.createObjectURL(blob);
+              }
+            } else {
+              // Với MP3 và WAV gốc, trình duyệt hỗ trợ phát trực tiếp hoàn hảo
+              currentAudioUrl = URL.createObjectURL(blob);
+            }
+
+            audioPlayer.src = currentAudioUrl;
+            updateAudioPlayerTime();
+            
+            // Tự động phát âm thanh
+            audioPlayer.play().catch(err => console.log("Chặn tự động phát: " + err.message));
+
           }, (err) => {
             console.warn("Dạng sóng chi tiết chưa được hỗ trợ giải mã bởi trình duyệt: " + err.message);
             currentAudioBuffer = null;
             drawFallbackStaticWave();
+
+            // Nếu giải mã thất bại (trình duyệt cũ hoặc thiếu codec), nạp trực tiếp Blob thô làm dự phòng cuối cùng
+            currentAudioUrl = URL.createObjectURL(blob);
+            audioPlayer.src = currentAudioUrl;
+            updateAudioPlayerTime();
+            audioPlayer.play().catch(playErr => console.log("Chặn tự động phát dự phòng: " + playErr.message));
           });
 
         } catch (err) {
-          console.error(err);
+          console.error("Lỗi chuẩn bị phát âm thanh:", err);
           currentAudioBuffer = null;
           drawFallbackStaticWave();
+          
+          currentAudioUrl = URL.createObjectURL(blob);
+          audioPlayer.src = currentAudioUrl;
+          updateAudioPlayerTime();
+          audioPlayer.play().catch(playErr => console.log("Chặn tự động phát dự phòng: " + playErr.message));
         }
       }
 
@@ -1613,31 +1688,42 @@
       function updateAudioPlayerTime() {
         const timeDisplay = document.getElementById('player-time');
         
+        let durationSec = audioPlayer.duration;
+        if (isNaN(durationSec) || !isFinite(durationSec)) {
+          if (currentAudioBuffer) {
+            durationSec = currentAudioBuffer.duration;
+          } else if (typeof currentPlayerTrackDuration === 'number' && currentPlayerTrackDuration > 0) {
+            durationSec = currentPlayerTrackDuration;
+          }
+        }
+        
         const curTime = formatSeconds(audioPlayer.currentTime);
-        const duration = isNaN(audioPlayer.duration) ? '0:00' : formatSeconds(audioPlayer.duration);
+        const duration = (isNaN(durationSec) || !isFinite(durationSec)) ? '0:00' : formatSeconds(durationSec);
         timeDisplay.textContent = `${curTime} / ${duration}`;
 
         // Cập nhật lướt màu và vạch đỏ định vị thanh dạng sóng SoundCloud
+        const width = waveformCanvas.width;
+        const height = waveformCanvas.height;
+        const progress = (durationSec && isFinite(durationSec)) ? (audioPlayer.currentTime / durationSec) : 0;
+
+        // Vẽ lại sóng tĩnh nguyên bản
         if (currentAudioBuffer) {
-          const width = waveformCanvas.width;
-          const height = waveformCanvas.height;
-          const progress = audioPlayer.duration ? (audioPlayer.currentTime / audioPlayer.duration) : 0;
-
-          // Vẽ lại sóng tĩnh nguyên bản
           drawStaticWaveform(currentAudioBuffer);
-
-          // Phủ mờ một lớp màu xanh ấm áp lên phần nhạc đã phát qua
-          waveformCtx.fillStyle = 'rgba(2, 132, 199, 0.3)';
-          waveformCtx.fillRect(0, 0, width * progress, height);
-
-          // Vẽ vạch định vị màu đỏ sắc nét
-          waveformCtx.strokeStyle = '#ef4444';
-          waveformCtx.lineWidth = 2;
-          waveformCtx.beginPath();
-          waveformCtx.moveTo(width * progress, 0);
-          waveformCtx.lineTo(width * progress, height);
-          waveformCtx.stroke();
+        } else {
+          drawFallbackStaticWave();
         }
+
+        // Phủ mờ một lớp màu xanh ấm áp lên phần nhạc đã phát qua
+        waveformCtx.fillStyle = 'rgba(2, 132, 199, 0.3)';
+        waveformCtx.fillRect(0, 0, width * progress, height);
+
+        // Vẽ vạch định vị màu đỏ sắc nét
+        waveformCtx.strokeStyle = '#ef4444';
+        waveformCtx.lineWidth = 2;
+        waveformCtx.beginPath();
+        waveformCtx.moveTo(width * progress, 0);
+        waveformCtx.lineTo(width * progress, height);
+        waveformCtx.stroke();
       }
 
       // 6. CÁC HÀM TIỆN ÍCH CHUNG (UTILITIES)
@@ -1719,13 +1805,13 @@
 
         container.appendChild(toast);
 
-        // Tự biến mất sau 3.5 giây
+        // Tự biến mất sau 6.0 giây để người dùng dễ đọc hơn
         setTimeout(() => {
           toast.style.animation = 'slide-out 0.2s ease-in forwards';
           toast.addEventListener('animationend', () => {
             toast.remove();
           });
-        }, 3500);
+        }, 6000);
       }
     </script>
 
