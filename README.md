@@ -1,49 +1,34 @@
-# 🎧 Bộ Chuyển Đổi Âm Thanh Đa Định Dạng
+# 🎧 Chuyển Video, Audio Sang Opus, MP3, WAV
 
-Đây là ứng dụng web hiện đại, gọn nhẹ và tiện lợi, giúp bạn dễ dàng chuyển đổi hàng loạt tệp tin âm thanh và video thuộc nhiều định dạng khác nhau sang các định dạng đầu ra phổ biến như **Opus** (.opus), **MP3** (.mp3), hoặc **WAV** (.wav) chất lượng cao ngay trên trình duyệt của bạn.
+Đây là ứng dụng giúp bạn dễ dàng đổi đuôi các tệp video hoặc bản nhạc từ máy của mình sang các định dạng âm thanh phổ biến như **Opus** (siêu nhẹ máy), **MP3** (dễ nghe trên mọi thiết bị), hoặc **WAV** (chất lượng âm thanh gốc) cực kỳ nhanh chóng.
 
-Ứng dụng hoạt động trực tiếp trên thiết bị của bạn, bảo mật tuyệt đối vì không cần gửi tệp tin lên bất kỳ máy chủ nào trên mạng.
-
----
-
-## 💡 Các Tính Năng Tiện Dụng
-
-* **Hỗ trợ đa định dạng đầu ra linh hoạt**:
-  * **Opus (.opus)**: Công nghệ nén hiện đại nhất, tiết kiệm tối đa không gian lưu trữ mà âm thanh nghe vẫn sắc nét, rõ ràng.
-  * **MP3 (.mp3)**: Định dạng âm thanh phổ biến nhất thế giới, tương thích cực tốt với mọi thiết bị di động, loa nghe nhạc và máy nghe nhạc cổ điển.
-  * **WAV (.wav)**: Định dạng âm thanh thô không nén, lưu giữ trọn vẹn từng chi tiết âm thanh ở dạng gốc.
-* **Cài đặt chất lượng mặc định tối ưu**:
-  * **Mặc định định dạng**: Hệ thống ưu tiên chọn định dạng **Opus** chất lượng cao khi khởi động.
-  * **Tốc độ truyền (Bitrate) tối ưu**: Đã cấu hình mặc định sẵn **320 kbps** cho định dạng MP3 và **192 kbps** cho định dạng Opus để mang lại trải nghiệm âm nhạc hoàn hảo nhất.
-  * **Tần số lấy mẫu và số kênh**: Mặc định **giữ nguyên gốc** của tệp tin đầu vào để tránh suy giảm chất lượng do việc chuyển đổi không mong muốn.
-* **Chuyển đổi hàng loạt nhanh chóng**:
-  * Hỗ trợ kéo thả trực tiếp cùng lúc nhiều tệp âm thanh hoặc video vào ứng dụng hoặc click chọn từ thiết bị của bạn.
-  * Hàng đợi trực quan hiển thị rõ tên tệp, kích thước tệp gốc, thanh tiến trình chạy phần trăm thời gian thực và dung lượng sau khi nén để bạn tiện theo dõi.
-* **Lưu trữ thành phẩm tiện lợi**:
-  * **Tải riêng lẻ**: Khi một tệp đã được chuyển đổi xong, nút chức năng sẽ tự động chuyển sang nút **Tải về** màu xanh lá giúp bạn nhanh chóng lưu riêng tệp đó.
-  * **Tải tất cả cùng lúc (ZIP)**: Chỉ với một nút bấm duy nhất, toàn bộ các tệp âm thanh đã được xử lý xong sẽ được gom lại thành một tệp nén duy nhất giúp tải về máy siêu tốc.
-* **Nghe thử trực tiếp & Biểu đồ sóng âm trực quan**:
-  * Tích hợp sẵn trình phát nhạc nhỏ gọn để bạn bấm nghe thử ngay tập tin đã chuyển đổi để kiểm tra chất lượng âm thanh trước khi lưu.
-  * Biểu đồ hiển thị dạng sóng âm thanh giúp bạn dễ theo dõi và click chuột trực tiếp lên dải sóng để tua nhanh.
-* **Hoạt động hoàn toàn không cần Internet (Offline)**:
-  * Ứng dụng được tích hợp sẵn cơ chế dự phòng thông minh (offline fallback) cho tất cả các thư viện xử lý âm thanh như **Opus**, **MP3 (lamejs)** và **ZIP (JSZip)**. Toàn bộ các tệp thư viện gốc đã được lưu sẵn trong thư mục `js/` giúp chương trình chạy mượt mà ngay cả khi không có mạng.
+Ứng dụng chạy trực tiếp trên thiết bị của bạn nên cực kỳ an toàn, bảo mật và tiện lợi.
 
 ---
 
-## 🛠️ Hướng Dẫn Sử Dụng Nhanh
+## 🌟 Những Điểm Tiện Lợi Cho Bạn
 
-1. **Mở ứng dụng**: Truy cập trực tiếp vào trang web của chương trình bằng bất kỳ trình duyệt nào (Chrome, Firefox, Edge, Safari...).
-2. **Chọn định dạng & cấu hình**:
-   * Chọn định dạng xuất ra bạn mong muốn (**Opus**, **MP3** hoặc **WAV**).
-   * Thay đổi các thông số về tốc độ truyền (Bitrate), số kênh, tần số lấy mẫu (nếu bạn có yêu cầu đặc biệt; khuyến nghị giữ nguyên cấu hình mặc định tối ưu).
-3. **Kéo thả tệp tin**: Kéo các tệp âm thanh hoặc video cần chuyển đổi thả vào vùng nét đứt **Kéo thả tệp âm thanh hoặc video vào đây**, hoặc nhấp chuột vào khung đó để duyệt tìm tệp từ thiết bị của bạn.
-4. **Bắt đầu thực hiện**: Nhấn nút **Bắt đầu chuyển đổi** để ứng dụng bắt đầu tiến hành xử lý hàng loạt tệp tin của bạn.
-5. **Nghe thử và Tải về**:
-   * Bạn có thể bấm nút **Phát** để nghe thử trực tiếp trên thanh sóng âm nhạc ở bên dưới, hoặc bấm biểu tượng **Tải xuống** (màu xanh lá) để lưu tệp đó về máy.
-   * Để tải về toàn bộ danh sách tệp tin đã xong: Nhấn nút **Tải tệp ZIP tổng hợp** để nhận về đầy đủ tất cả các bài nhạc chỉ trong một lần tải.
+* **Bảo mật tuyệt đối**: Video và âm thanh của bạn được xử lý ngay trên điện thoại hoặc máy tính cá nhân. Không có bất kỳ tệp tin nào bị tải lên mạng, giúp bạn hoàn toàn yên tâm không lo bị rò rỉ video, hình ảnh hay âm thanh riêng tư.
+* **Giao diện thân thiện, dễ bấm trên điện thoại**:
+  * Phần Nhật ký hoạt động được đưa xuống dưới cùng và hiển thị gọn gàng trên một cột duy nhất, không lo bị tràn viền hay che mất chữ kể cả trên các dòng điện thoại màn hình nhỏ.
+* **Không có mạng vẫn dùng bình thường**: Ứng dụng được thiết kế đặc biệt để có thể hoạt động hoàn hảo ngay cả khi bạn tắt mạng Wifi, mạng di động hoặc đang ở những nơi sóng yếu.
+* **Chuyển đổi nhiều tệp cùng lúc**: Bạn có thể chọn cùng lúc nhiều video hoặc bài hát để đổi đuôi hàng loạt, giúp tiết kiệm thời gian chờ đợi.
+* **Tải về siêu tốc và tiện lợi**:
+  * **Tải từng tệp**: Đổi xong tệp nào là bạn có thể bấm nút **Tải xuống** (màu xanh lá) để lưu ngay tệp đó về máy.
+  * **Tải tất cả**: Chỉ với một nút bấm **Tải tất cả**, ứng dụng tự gom toàn bộ các bài nhạc đã đổi xong vào một tệp nén duy nhất giúp bạn tải về cực kỳ nhanh chóng.
+* **Nghe thử trực tiếp dễ dàng**: Tích hợp sẵn trình phát nhạc kèm biểu đồ sóng âm giúp bạn bấm nghe thử ngay bản nhạc vừa đổi xong để kiểm tra trước khi lưu về máy.
 
 ---
 
-## 👥 Thông Tin Tác Giả
+## 🧭 Hướng Dẫn Sử Dụng Đơn Giản
+
+* **Bước 1**: Chọn loại nhạc bạn muốn đổi sang ở góc trái màn hình (gồm **Opus** - nghe rõ mà cực nhẹ máy, **MP3** - thông dụng nhất, hoặc **WAV** - giữ nguyên chất lượng gốc).
+* **Bước 2**: Nhấn vào khung **Chọn Video, Audio** để chọn các tệp video hoặc bản nhạc từ máy của bạn.
+* **Bước 3**: Nhấn nút **Bắt đầu** để ứng dụng tiến hành đổi đuôi tự động.
+* **Bước 4**: Bấm nghe thử trực tiếp hoặc nhấn nút **Tải tất cả** để lưu toàn bộ kết quả về thiết bị của bạn.
+
+---
+
+## 👤 Thông Tin Tác Giả
 
 * **Tác giả:** Dương Tấn Chánh
