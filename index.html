@@ -1288,82 +1288,7 @@
         });
       }
 
-      // Hàm chuyển đổi dữ liệu từ AudioBuffer sang tệp âm thanh WAV không nén (PCM Int16)
-      function encodeAudioBufferToWav(audioBuffer) {
-        const numOfChan = audioBuffer.numberOfChannels;
-        const sampleRate = audioBuffer.sampleRate;
-        const format = 1; // 1 = Raw LPCM (16-bit Int)
-        const bitDepth = 16;
-        
-        let result;
-        if (numOfChan === 2) {
-          result = interleave(audioBuffer.getChannelData(0), audioBuffer.getChannelData(1));
-        } else {
-          result = audioBuffer.getChannelData(0);
-        }
-        
-        const buffer = new ArrayBuffer(44 + result.length * 2);
-        const view = new DataView(buffer);
-        
-        /* RIFF identifier */
-        writeString(view, 0, 'RIFF');
-        /* file length */
-        view.setUint32(4, 36 + result.length * 2, true);
-        /* RIFF type */
-        writeString(view, 8, 'WAVE');
-        /* format chunk identifier */
-        writeString(view, 12, 'fmt ');
-        /* format chunk length */
-        view.setUint32(16, 16, true);
-        /* sample format (raw) */
-        view.setUint16(20, format, true);
-        /* channel count */
-        view.setUint16(22, numOfChan, true);
-        /* sample rate */
-        view.setUint32(24, sampleRate, true);
-        /* byte rate (sample rate * block align) */
-        view.setUint32(28, sampleRate * numOfChan * (bitDepth / 8), true);
-        /* block align (channel count * bytes per sample) */
-        view.setUint16(32, numOfChan * (bitDepth / 8), true);
-        /* bits per sample */
-        view.setUint16(34, bitDepth, true);
-        /* data chunk identifier */
-        writeString(view, 36, 'data');
-        /* data chunk length */
-        view.setUint32(40, result.length * 2, true);
-        
-        // Ghi mẫu dữ liệu âm thanh PCM
-        floatTo16BitPCM(view, 44, result);
-        
-        return new Blob([view], { type: 'audio/wav' });
-      }
 
-      function interleave(inputL, inputR) {
-        const length = inputL.length + inputR.length;
-        const result = new Float32Array(length);
-        let index = 0;
-        let inputIndex = 0;
-        
-        while (index < length) {
-          result[index++] = inputL[inputIndex];
-          result[index++] = inputR[inputIndex];
-          inputIndex++;
-        }
-        return result;
-      }
-
-      function floatTo16BitPCM(output, offset, input) {
-        for (let i = 0; i < input.length; i++, offset += 2) {
-          let s = Math.max(-1, Math.min(1, input[i]));
-          output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-        }
-      }
-
-      function writeString(view, offset, string) {
-        for (let i = 0; i < string.length; i++) {
-          view.setUint8(offset + i, string.charCodeAt(i));
-        }
-      }
 
       // Hàm mã hoá dữ liệu âm thanh từ AudioBuffer sang MP3 sử dụng lamejs ngoại tuyến
       function encodeAudioBufferToMp3(audioBuffer, targetBitrateKbps, onProgress) {
@@ -1568,26 +1493,8 @@
             // Vẽ lại sóng tĩnh nguyên bản thực tế
             drawStaticWaveform(decodedBuffer);
 
-            // Kiểm tra xem có phải định dạng Opus hoặc Ogg không
-            const nameLower = filename.toLowerCase();
-            const isOpus = nameLower.endsWith('.opus') || nameLower.endsWith('.ogg');
-
-            if (isOpus) {
-              // Đối với định dạng Opus/Ogg, Firefox và một số trình duyệt khác bị kẹt do cấu trúc Ogg không có Seek Index.
-              // Chúng ta chuyển đổi cực nhanh sang tệp WAV thô tạm thời trong bộ nhớ để phát lại mượt mà 100% với hiển thị thời lượng chuẩn.
-              console.log("Phát hiện định dạng nén Opus. Tạo dữ liệu WAV tạm thời để tương thích hoàn hảo trên Firefox.");
-              try {
-                const wavBlob = encodeAudioBufferToWav(decodedBuffer);
-                currentAudioUrl = URL.createObjectURL(wavBlob);
-              } catch (wavErr) {
-                console.error("Lỗi tạo tệp WAV tạm thời, chuyển sang dùng Blob gốc:", wavErr);
-                currentAudioUrl = URL.createObjectURL(blob);
-              }
-            } else {
-              // Với MP3 và WAV gốc, trình duyệt hỗ trợ phát trực tiếp hoàn hảo
-              currentAudioUrl = URL.createObjectURL(blob);
-            }
-
+            // Nạp trực tiếp Blob định dạng gốc (ví dụ Opus/Ogg/MP3/WAV) vào trình phát để người dùng nghe chất lượng nén thật 100%
+            currentAudioUrl = URL.createObjectURL(blob);
             audioPlayer.src = currentAudioUrl;
             updateAudioPlayerTime();
             
