@@ -9,8 +9,6 @@
 ## 🌟 Những Điểm Tiện Lợi Cho Bạn
 
 * **Bảo mật tuyệt đối**: Video và âm thanh của bạn được xử lý ngay trên điện thoại hoặc máy tính cá nhân. Không có bất kỳ tệp tin nào bị tải lên mạng, giúp bạn hoàn toàn yên tâm không lo bị rò rỉ video, hình ảnh hay âm thanh riêng tư.
-* **Giao diện thân thiện, dễ bấm trên điện thoại**:
-  * Phần Nhật ký hoạt động được đưa xuống dưới cùng và hiển thị gọn gàng trên một cột duy nhất, không lo bị tràn viền hay che mất chữ kể cả trên các dòng điện thoại màn hình nhỏ.
 * **Không có mạng vẫn dùng bình thường**: Ứng dụng được thiết kế đặc biệt để có thể hoạt động hoàn hảo ngay cả khi bạn tắt mạng Wifi, mạng di động hoặc đang ở những nơi sóng yếu.
 * **Chuyển đổi nhiều tệp cùng lúc**: Bạn có thể chọn cùng lúc nhiều video hoặc bài hát để đổi đuôi hàng loạt, giúp tiết kiệm thời gian chờ đợi.
 * **Tải về siêu tốc và tiện lợi**:
