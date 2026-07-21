@@ -453,6 +453,7 @@
     <!-- Thư viện nén file ZIP & MP3 (Có cơ chế fallback) -->
     <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js" onerror="this.onerror=null; this.src='js/jszip.min.js';"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js" onerror="this.onerror=null; this.src='js/lame.min.js';"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js" onerror="this.onerror=null; this.src='js/mp4box.all.min.js';"></script>
   </head>
   <body>
 
@@ -740,6 +741,25 @@
           });
         }
 
+        // Kiểm tra thư viện MP4Box cho MP4
+        if (typeof MP4Box === 'undefined') {
+          console.warn("MP4Box chưa được tải từ CDN, đang tải bản dự phòng cục bộ...");
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'js/mp4box.all.min.js';
+            script.onload = () => {
+              console.log("Đã tải thành công MP4Box dự phòng.");
+              resolve();
+            };
+            script.onerror = () => {
+              console.error("Không thể tải MP4Box dự phòng!");
+              showToast("Không thể khởi động thư viện phân tích MP4!", "danger");
+              resolve();
+            };
+            document.head.appendChild(script);
+          });
+        }
+
         // Kiểm tra sự khả dụng của CDN unpkg bằng cách tải thử tệp JS của Worker
         let cdnWorking = false;
         try {
@@ -964,8 +984,24 @@
               <div class="progress-bar-container"><div class="progress-bar success" style="width: 100%;"></div></div>
               <div style="font-size: 0.8rem; margin-top: 0.1rem;" class="saving-ratio">Giảm ${saving}% dung lượng!</div>
             `;
+          } else if (item.status === 'đang kiểm tra') {
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary);">Đang kiểm tra...</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: 10%; background-color: #f59e0b;"></div></div>
+            `;
+          } else if (item.status === 'đang tách âm thanh') {
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary);">Đang tách âm thanh...</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: 10%; background-color: var(--color-primary);"></div></div>
+            `;
           } else if (item.status === 'lỗi') {
             statusHtml = `<span style="color: var(--color-danger); font-weight: bold;" title="${item.errorMsg}">Lỗi xử lý</span>`;
+          } else {
+            // Hiển thị tất cả các trạng thái tuỳ biến khác hoặc tiến trình trích xuất trực tiếp
+            statusHtml = `
+              <div style="font-weight: bold; color: var(--color-primary); font-size: 0.95rem;" title="${item.status}">${item.status}</div>
+              <div class="progress-bar-container"><div class="progress-bar" style="width: ${item.progress || 10}%; background-color: var(--color-primary);"></div></div>
+            `;
           }
 
           let sizeNewHtml = '-';
@@ -1080,6 +1116,45 @@
           if (item.status === 'xong' || item.status === 'lỗi') continue; // Bỏ qua tệp đã xử lý
 
           try {
+            // Kiểm tra xem tệp tin có phải là MP4 và có chứa luồng âm thanh gốc Opus không
+            let isExtractedOpus = false;
+            const fileLower = item.file.name.toLowerCase();
+            if (fileLower.endsWith('.mp4') || item.file.type === 'video/mp4') {
+              try {
+                item.status = 'đang kiểm tra';
+                renderConversionQueue();
+                const codec = await preParseVideoCodec(item.file);
+                if (codec && codec.toLowerCase().includes('opus')) {
+                  showToast(`Phát hiện luồng Opus gốc trong tệp ${item.file.name}, đang tiến hành tách trực tiếp không nén lại!`, "success");
+                  
+                  const result = await extractAudioClient(item.file, (statusMsg, percent) => {
+                    item.status = statusMsg;
+                    item.progress = percent;
+                    renderConversionQueue();
+                  });
+
+                  item.status = 'xong';
+                  item.compressedBlob = result.blob;
+                  item.compressedSize = result.blob.size;
+                  item.duration = result.duration;
+                  
+                  const lastDot = item.file.name.lastIndexOf('.');
+                  const baseName = lastDot === -1 ? item.file.name : item.file.name.substring(0, lastDot);
+                  item.newName = `${baseName}${result.ext}`;
+                  
+                  renderConversionQueue();
+                  isExtractedOpus = true;
+                }
+              } catch (extractErr) {
+                console.error("Lỗi khi trích xuất âm thanh gốc Opus từ MP4:", extractErr);
+                showToast(`Không thể trích xuất trực tiếp Opus từ tệp ${item.file.name}, chuyển sang phương thức chuyển đổi thông thường.`, "outline");
+              }
+            }
+
+            if (isExtractedOpus) {
+              continue; // Bỏ qua phần giải mã và mã hóa tiếp theo, chuyển sang tệp kế tiếp!
+            }
+
             item.status = 'đang giải mã';
             renderConversionQueue();
 
@@ -1191,15 +1266,43 @@
       function encodeAudioBufferToOpus(audioBuffer, options, onProgress) {
         return new Promise(async (resolve, reject) => {
           let worker = null;
+          let progressInterval = null;
           try {
             worker = await createWorker(workerUrl);
             const chunks = [];
             const numChannels = Math.min(options.numberOfChannels, audioBuffer.numberOfChannels);
 
+            // Các biến phục vụ việc giả lập tiến trình mượt mà
+            let currentProgress = 0;
+            let targetProgress = 0;
+            
+            // Ước lượng thời gian mã hoá dựa trên thời lượng âm thanh (mỗi giây âm thanh mất khoảng 45ms để nén trong Web Worker)
+            const estimatedEncodeTimeMs = Math.max(1000, audioBuffer.duration * 45);
+            // Giới hạn tăng tối đa của tiến trình ở mỗi tick (80ms) để giữ cho thanh tiến trình chạy mượt và không bị nhảy vọt
+            const maxIncrementPerTick = 98 / (estimatedEncodeTimeMs / 80);
+
+            progressInterval = setInterval(() => {
+              if (currentProgress < targetProgress) {
+                const idealStep = Math.max(1, Math.round((targetProgress - currentProgress) * 0.12));
+                const actualStep = Math.min(idealStep, maxIncrementPerTick);
+                currentProgress = Math.min(targetProgress, currentProgress + actualStep);
+                if (onProgress) {
+                  onProgress(Math.round(currentProgress));
+                }
+              }
+            }, 80);
+
             worker.onmessage = function(e) {
               if (e.data && e.data.page) {
                 chunks.push(e.data.page);
               } else if (e.data && e.data.message === 'done') {
+                if (progressInterval) {
+                  clearInterval(progressInterval);
+                  progressInterval = null;
+                }
+                if (onProgress) {
+                  onProgress(100);
+                }
                 const blob = new Blob(chunks, { type: 'audio/ogg' });
                 console.log("Mã hoá Opus hoàn tất. Tổng số trang Ogg:", chunks.length, "Dung lượng tệp:", blob.size, "bytes");
                 worker.terminate();
@@ -1245,9 +1348,8 @@
                     }, chunkBuffers.map(b => b.buffer));
 
                     offset += size;
-                    if (onProgress) {
-                      onProgress(Math.round((offset / totalSamples) * 100));
-                    }
+                    // Đặt mục tiêu tiến trình gửi đi tối đa là 98%, chừa lại 2% khi thực sự giải mã xong
+                    targetProgress = Math.round((offset / totalSamples) * 98);
 
                     // Kích hoạt tác vụ kế tiếp bằng macro-task không độ trễ
                     channel.port2.postMessage(null);
@@ -1261,6 +1363,10 @@
             };
 
             worker.onerror = function(err) {
+              if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+              }
               if (worker) worker.terminate();
               reject(err);
             };
@@ -1282,10 +1388,91 @@
             });
 
           } catch (err) {
+            if (progressInterval) {
+              clearInterval(progressInterval);
+              progressInterval = null;
+            }
             if (worker) worker.terminate();
             reject(err);
           }
         });
+      }
+
+      // Hàm chuyển đổi dữ liệu từ AudioBuffer sang tệp âm thanh WAV không nén (PCM Int16) để giữ cho tuỳ chọn WAV hoạt động mượt mà
+      function encodeAudioBufferToWav(audioBuffer) {
+        const numOfChan = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const format = 1; // 1 = Raw LPCM (16-bit Int)
+        const bitDepth = 16;
+        
+        let result;
+        if (numOfChan === 2) {
+          result = interleave(audioBuffer.getChannelData(0), audioBuffer.getChannelData(1));
+        } else {
+          result = audioBuffer.getChannelData(0);
+        }
+        
+        const buffer = new ArrayBuffer(44 + result.length * 2);
+        const view = new DataView(buffer);
+        
+        /* RIFF identifier */
+        writeString(view, 0, 'RIFF');
+        /* file length */
+        view.setUint32(4, 36 + result.length * 2, true);
+        /* RIFF type */
+        writeString(view, 8, 'WAVE');
+        /* format chunk identifier */
+        writeString(view, 12, 'fmt ');
+        /* format chunk length */
+        view.setUint32(16, 16, true);
+        /* sample format (raw) */
+        view.setUint16(20, format, true);
+        /* channel count */
+        view.setUint16(22, numOfChan, true);
+        /* sample rate */
+        view.setUint32(24, sampleRate, true);
+        /* byte rate (sample rate * block align) */
+        view.setUint32(28, sampleRate * numOfChan * (bitDepth / 8), true);
+        /* block align (channel count * bytes per sample) */
+        view.setUint16(32, numOfChan * (bitDepth / 8), true);
+        /* bits per sample */
+        view.setUint16(34, bitDepth, true);
+        /* data chunk identifier */
+        writeString(view, 36, 'data');
+        /* data chunk length */
+        view.setUint32(40, result.length * 2, true);
+        
+        // Ghi mẫu dữ liệu âm thanh PCM
+        floatTo16BitPCM(view, 44, result);
+        
+        return new Blob([view], { type: 'audio/wav' });
+      }
+
+      function interleave(inputL, inputR) {
+        const length = inputL.length + inputR.length;
+        const result = new Float32Array(length);
+        let index = 0;
+        let inputIndex = 0;
+        
+        while (index < length) {
+          result[index++] = inputL[inputIndex];
+          result[index++] = inputR[inputIndex];
+          inputIndex++;
+        }
+        return result;
+      }
+
+      function floatTo16BitPCM(output, offset, input) {
+        for (let i = 0; i < input.length; i++, offset += 2) {
+          let s = Math.max(-1, Math.min(1, input[i]));
+          output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+      }
+
+      function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
       }
 
 
@@ -1688,6 +1875,386 @@
           return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
         return `${mins}:${String(secs).padStart(2, '0')}`;
+      }
+
+      // ==========================================
+      // BỘ TRÍCH XUẤT ÂM THANH OFFLINE BẰNG MP4BOX.JS (CLIENT-SIDE)
+      // ==========================================
+
+      const oggCrcTable = (() => {
+        const crcTable = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+          let r = i << 24;
+          for (let j = 0; j < 8; j++) {
+            r = (r & 0x80000000) ? (r << 1) ^ 0x04C11DB7 : (r << 1);
+          }
+          crcTable[i] = r;
+        }
+        return crcTable;
+      })();
+
+      function calcOggCrc(data) {
+        let crc = 0;
+        for (let i = 0; i < data.length; i++) {
+          crc = (crc << 8) ^ oggCrcTable[((crc >>> 24) ^ data[i]) & 0xFF];
+        }
+        return crc;
+      }
+
+      function buildOggPage(packets, headerType, granulePos, serialNum, sequenceNum) {
+        const segmentTable = [];
+        let totalPayloadSize = 0;
+        for (let p = 0; p < packets.length; p++) {
+          const pkt = packets[p];
+          let len = pkt.length;
+          while (len >= 255) {
+            segmentTable.push(255);
+            len -= 255;
+          }
+          segmentTable.push(len);
+          totalPayloadSize += pkt.length;
+        }
+        
+        const numSegments = segmentTable.length;
+        const pageSize = 27 + numSegments + totalPayloadSize;
+        const page = new Uint8Array(pageSize);
+        
+        // Capture pattern 'OggS'
+        page[0] = 0x4F; page[1] = 0x67; page[2] = 0x67; page[3] = 0x53;
+        page[4] = 0; // Version
+        page[5] = headerType; // Header type (0x02 BOS, 0x04 EOS, 0x00 normal)
+        
+        // Granule position (64-bit little-endian)
+        let gpLow = granulePos & 0xFFFFFFFF;
+        let gpHigh = Math.floor(granulePos / 0x100000000) & 0xFFFFFFFF;
+        page[6] = gpLow & 0xFF;
+        page[7] = (gpLow >>> 8) & 0xFF;
+        page[8] = (gpLow >>> 16) & 0xFF;
+        page[9] = (gpLow >>> 24) & 0xFF;
+        page[10] = gpHigh & 0xFF;
+        page[11] = (gpHigh >>> 8) & 0xFF;
+        page[12] = (gpHigh >>> 16) & 0xFF;
+        page[13] = (gpHigh >>> 24) & 0xFF;
+        
+        // Serial number (32-bit little-endian)
+        page[14] = serialNum & 0xFF;
+        page[15] = (serialNum >>> 8) & 0xFF;
+        page[16] = (serialNum >>> 16) & 0xFF;
+        page[17] = (serialNum >>> 24) & 0xFF;
+        
+        // Page sequence number (32-bit little-endian)
+        page[18] = sequenceNum & 0xFF;
+        page[19] = (sequenceNum >>> 8) & 0xFF;
+        page[20] = (sequenceNum >>> 16) & 0xFF;
+        page[21] = (sequenceNum >>> 24) & 0xFF;
+        
+        // Checksum (initially 0)
+        page[22] = 0; page[23] = 0; page[24] = 0; page[25] = 0;
+        
+        // Number of segments
+        page[26] = numSegments;
+        
+        // Write segment table
+        for (let i = 0; i < numSegments; i++) {
+          page[27 + i] = segmentTable[i];
+        }
+        
+        // Write payloads
+        let offset = 27 + numSegments;
+        for (let p = 0; p < packets.length; p++) {
+          page.set(packets[p], offset);
+          offset += packets[p].length;
+        }
+        
+        // Compute Checksum
+        const crc = calcOggCrc(page);
+        page[22] = crc & 0xFF;
+        page[23] = (crc >>> 8) & 0xFF;
+        page[24] = (crc >>> 16) & 0xFF;
+        page[25] = (crc >>> 24) & 0xFF;
+        
+        return page;
+      }
+
+      function getAudioExtension(codec) {
+        if (!codec) return '.aac';
+        const c = codec.toLowerCase();
+        if (c.includes('mp3')) return '.mp3';
+        if (c.includes('ac3') || c.includes('ac-3')) return '.ac3';
+        if (c.includes('eac3') || c.includes('e-ac-3')) return '.eac3';
+        if (c.includes('flac')) return '.flac';
+        if (c.includes('opus')) return '.opus';
+        if (c.includes('vorbis')) return '.ogg';
+        return '.aac';
+      }
+
+      function getAudioMimeType(ext) {
+        if (ext === '.aac') return 'audio/aac';
+        if (ext === '.mp3') return 'audio/mpeg';
+        if (ext === '.ac3' || ext === '.eac3') return 'audio/ac3';
+        if (ext === '.opus') return 'audio/ogg; codecs=opus';
+        if (ext === '.ogg') return 'audio/ogg';
+        if (ext === '.flac') return 'audio/flac';
+        return 'audio/octet-stream';
+      }
+
+      function preParseVideoCodec(file) {
+        return new Promise((resolve) => {
+          if (typeof MP4Box === 'undefined') {
+            resolve(null);
+            return;
+          }
+
+          const mp4boxfile = MP4Box.createFile();
+          let resolved = false;
+
+          mp4boxfile.onError = function() {
+            if (!resolved) {
+              resolved = true;
+              resolve(null);
+            }
+          };
+
+          mp4boxfile.onReady = function(info) {
+            let audioCodec = null;
+            for (let i = 0; i < info.tracks.length; i++) {
+              if (info.tracks[i].type === 'audio') {
+                audioCodec = info.tracks[i].codec;
+                break;
+              }
+            }
+            if (!resolved) {
+              resolved = true;
+              resolve(audioCodec);
+            }
+          };
+
+          const reader = new FileReader();
+          reader.onerror = () => {
+            if (!resolved) {
+              resolved = true;
+              resolve(null);
+            }
+          };
+
+          reader.onload = function(e) {
+            const arrayBuffer = e.target.result;
+            arrayBuffer.fileStart = 0;
+            try {
+              mp4boxfile.appendBuffer(arrayBuffer);
+              mp4boxfile.flush();
+            } catch (err) {
+              if (!resolved) {
+                resolved = true;
+                resolve(null);
+              }
+            }
+          };
+          
+          // Chỉ cần đọc một phần đầu của video (ví dụ: 10MB) là đủ để lấy metadata cấu trúc MP4
+          const blobSlice = file.slice(0, Math.min(file.size, 10 * 1024 * 1024));
+          reader.readAsArrayBuffer(blobSlice);
+
+          // Đặt thời gian chờ tối đa 3 giây để tránh treo nếu tệp tin có cấu trúc dị biệt
+          setTimeout(() => {
+            if (!resolved) {
+              resolved = true;
+              resolve(null);
+            }
+          }, 3000);
+        });
+      }
+
+      async function extractAudioClient(file, progressCallback) {
+        return new Promise((resolve, reject) => {
+          if (typeof MP4Box === 'undefined') {
+            reject(new Error("Không tìm thấy thư viện MP4Box.js. Vui lòng kiểm tra lại kết nối mạng hoặc tệp tin cục bộ."));
+            return;
+          }
+
+          progressCallback('Khởi tạo MP4Box...', 5);
+          const mp4boxfile = MP4Box.createFile();
+          let audioTrack = null;
+          let allSamples = [];
+
+          mp4boxfile.onError = function(err) {
+            reject(new Error("Lỗi MP4Box: " + err));
+          };
+
+          mp4boxfile.onReady = function(info) {
+            for (let i = 0; i < info.tracks.length; i++) {
+              if (info.tracks[i].type === 'audio') {
+                audioTrack = info.tracks[i];
+                break;
+              }
+            }
+
+            if (!audioTrack) {
+              reject(new Error("Không tìm thấy luồng âm thanh nào trong tệp video này."));
+              return;
+            }
+
+            // Thiết lập cấu hình trích xuất tất cả các mẫu của track âm thanh
+            mp4boxfile.setExtractionOptions(audioTrack.id, null, { nbSamples: 1000000 });
+            mp4boxfile.start();
+          };
+
+          mp4boxfile.onSamples = function(id, user, samples) {
+            allSamples = allSamples.concat(samples);
+            if (audioTrack && audioTrack.nb_samples) {
+              const percent = Math.min(95, 50 + Math.round((allSamples.length * 45) / audioTrack.nb_samples));
+              progressCallback(`Đang trích xuất (${allSamples.length}/${audioTrack.nb_samples} mẫu)...`, percent);
+            }
+          };
+
+          const reader = new FileReader();
+          reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded * 45) / e.total);
+              progressCallback(`Đang đọc tệp video... ${percent}%`, percent);
+            }
+          };
+
+          reader.onerror = () => {
+            reject(new Error("Không thể đọc tệp tin video từ thiết bị của bạn."));
+          };
+
+          reader.onload = function(e) {
+            const arrayBuffer = e.target.result;
+            arrayBuffer.fileStart = 0;
+
+            progressCallback('Đang phân tích MP4...', 48);
+            try {
+              mp4boxfile.appendBuffer(arrayBuffer);
+              mp4boxfile.flush();
+
+              if (allSamples.length === 0) {
+                reject(new Error("Không tìm thấy dữ liệu mẫu âm thanh nào trong tệp MP4 này."));
+                return;
+              }
+
+              progressCallback('Đang đóng gói âm thanh...', 95);
+
+              const codec = audioTrack.codec || 'opus';
+              const ext = getAudioExtension(codec);
+              let blob;
+
+              if (codec.toLowerCase().includes('opus')) {
+                // Đóng gói Opus thô vào container Ogg (.opus / .oga)
+                const chanCount = audioTrack.audio.channel_count || 2;
+                const sampleRate = audioTrack.audio.sample_rate || 48000;
+                
+                // 1. Tạo OpusHead (19 byte) theo RFC 7845
+                const opusHead = new Uint8Array(19);
+                opusHead[0] = 0x4F; opusHead[1] = 0x70; opusHead[2] = 0x75; opusHead[3] = 0x73; // 'Opus'
+                opusHead[4] = 0x48; opusHead[5] = 0x65; opusHead[6] = 0x61; opusHead[7] = 0x64; // 'Head'
+                opusHead[8] = 1; // Version
+                opusHead[9] = chanCount;
+                opusHead[10] = 0x38; // Pre-skip (312 samples, little-endian: 0x0138)
+                opusHead[11] = 0x01;
+                opusHead[12] = sampleRate & 0xFF;
+                opusHead[13] = (sampleRate >>> 8) & 0xFF;
+                opusHead[14] = (sampleRate >>> 16) & 0xFF;
+                opusHead[15] = (sampleRate >>> 24) & 0xFF;
+                opusHead[16] = 0; // Output Gain
+                opusHead[17] = 0;
+                opusHead[18] = 0; // Channel Mapping Family
+
+                // 2. Tạo OpusTags (định dạng comment thô)
+                const vendorString = "D.T.Chanh";
+                const vendorBytes = new TextEncoder().encode(vendorString);
+                const opusTags = new Uint8Array(8 + 4 + vendorBytes.length + 4);
+                opusTags[0] = 0x4F; opusTags[1] = 0x70; opusTags[2] = 0x75; opusTags[3] = 0x73; // 'Opus'
+                opusTags[4] = 0x54; opusTags[5] = 0x61; opusTags[6] = 0x67; opusTags[7] = 0x73; // 'Tags'
+                const vLen = vendorBytes.length;
+                opusTags[8] = vLen & 0xFF;
+                opusTags[9] = (vLen >>> 8) & 0xFF;
+                opusTags[10] = (vLen >>> 16) & 0xFF;
+                opusTags[11] = (vLen >>> 24) & 0xFF;
+                opusTags.set(vendorBytes, 12);
+                const offset = 12 + vLen;
+                opusTags[offset] = 0; // User comment list length = 0
+                opusTags[offset + 1] = 0;
+                opusTags[offset + 2] = 0;
+                opusTags[offset + 3] = 0;
+
+                // 3. Đóng gói các trang Ogg
+                const pages = [];
+                const serialNum = Math.floor(Math.random() * 0x7FFFFFFF);
+                let seqNum = 0;
+
+                // Trang BOS (Beginning Of Stream) chỉ chứa duy nhất OpusHead
+                const opusHeadPage = buildOggPage([opusHead], 0x02, 0, serialNum, seqNum++);
+                pages.push(opusHeadPage);
+
+                // Trang tiếp theo chứa OpusTags
+                const opusTagsPage = buildOggPage([opusTags], 0x00, 0, serialNum, seqNum++);
+                pages.push(opusTagsPage);
+
+                // Gộp các gói Opus vào các trang Ogg dữ liệu
+                let currentPackets = [];
+                let currentSegmentsCount = 0;
+                let granulePos = 0;
+
+                for (let i = 0; i < allSamples.length; i++) {
+                  const sample = allSamples[i];
+                  const pktData = sample.data;
+                  const segsForPkt = Math.ceil(pktData.length / 255);
+
+                  // Mỗi trang Ogg không nên vượt quá 255 segments hoặc gom quá 50 gói thô
+                  if (currentSegmentsCount + segsForPkt > 255 || currentPackets.length >= 50) {
+                    const isLast = (i === allSamples.length - 1);
+                    const pageType = isLast ? 0x04 : 0x00;
+                    const oggPage = buildOggPage(currentPackets, pageType, granulePos, serialNum, seqNum++);
+                    pages.push(oggPage);
+                    currentPackets = [];
+                    currentSegmentsCount = 0;
+                  }
+
+                  currentPackets.push(pktData);
+                  currentSegmentsCount += segsForPkt;
+                  
+                  // Cập nhật vị trí hạt (granulePos). Opus thường mặc định mỗi frame đại diện cho 20ms (960 mẫu ở tần số 48000Hz).
+                  granulePos += 960;
+                }
+
+                // Đóng gói trang cuối cùng nếu còn dư
+                if (currentPackets.length > 0) {
+                  const oggPage = buildOggPage(currentPackets, 0x04, granulePos, serialNum, seqNum++);
+                  pages.push(oggPage);
+                }
+
+                // Ghép tất cả các trang Ogg thành một khối duy nhất
+                const totalPagesSize = pages.reduce((sum, p) => sum + p.length, 0);
+                const outputBuffer = new Uint8Array(totalPagesSize);
+                let writeOffset = 0;
+                for (let i = 0; i < pages.length; i++) {
+                  outputBuffer.set(pages[i], writeOffset);
+                  writeOffset += pages[i].length;
+                }
+
+                const mimeType = getAudioMimeType(ext);
+                blob = new Blob([outputBuffer], { type: mimeType });
+              } else {
+                reject(new Error("Mã hóa âm thanh gốc không phải là Opus."));
+                return;
+              }
+
+              progressCallback('Hoàn tất!', 100);
+              resolve({
+                blob: blob,
+                ext: ext,
+                codec: codec,
+                duration: audioTrack.duration / audioTrack.timescale
+              });
+
+            } catch (err) {
+              reject(err);
+            }
+          };
+
+          reader.readAsArrayBuffer(file);
+        });
       }
 
       // Hệ thống hiển thị Toast thông báo thanh lịch
