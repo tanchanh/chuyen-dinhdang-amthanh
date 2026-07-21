@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bộ Chuyển Đổi Âm Thanh Đa Định Dạng - D.T.Chánh</title>
+    <title>Chuyển Video, Audio Sang Opus, MP3, WAV - D.T.Chánh</title>
     
     <!-- CSS Tự viết rõ ràng, ngăn nắp, không tải từ liên kết ngoài -->
     <style>
@@ -35,7 +35,7 @@
         margin: 0rem;
         font-size: 1.1rem;
         font-weight: normal;
-        padding-bottom: 5rem;
+        padding-bottom: 7rem;
         line-height: 1.5;
       }
 
@@ -388,36 +388,58 @@
         height: 32px;
       }
 
-      /* Toast Notification */
-      .toast-container {
-        position: fixed;
-        bottom: 1.5rem;
-        right: 1.5rem;
-        z-index: 1000;
+      /* Bảng Nhật ký Hoạt động Hệ thống */
+      .log-console {
+        background-color: #f8fafc;
+        border: 2px solid var(--color-border);
+        border-radius: 8px;
+        padding: 0.8rem;
+        height: 14.5rem;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        pointer-events: none;
+        font-family: var(--font-sans);
+        font-size: 0.95rem;
+        box-sizing: border-box;
       }
 
-      .toast {
-        background-color: #1e293b;
-        color: #ffffff;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 2px solid #475569;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        pointer-events: auto;
-        min-width: 18rem;
-        animation: slide-in 0.2s ease-out;
+      .log-item {
+        line-height: 1.4;
+        margin-bottom: 0.4rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
       }
 
-      @keyframes slide-in {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+      .log-emoticon {
+        font-size: 1.1rem;
+        margin-right: 0.3rem;
+        display: inline-block;
+      }
+
+      .log-emoticon.type-success {
+      }
+
+      .log-emoticon.type-danger {
+      }
+
+      .log-emoticon.type-warning {
+      }
+
+      .log-emoticon.type-info {
+      }
+
+      .log-time {
+        color: #94a3b8;
+        font-family: monospace;
+        font-size: 0.85rem;
+        margin-right: 0.4rem;
+        display: inline-block;
+      }
+
+      .log-text {
+        color: var(--text-primary);
+        display: inline;
       }
 
       /* SVG Icon Sizing */
@@ -436,18 +458,6 @@
         height: 2rem;
       }
 
-      @media (max-width: 576px) {
-        .toast-container {
-          right: 0.5rem;
-          left: 0.5rem;
-          bottom: 1rem;
-        }
-        .toast {
-          min-width: 0;
-          width: 100%;
-        }
-      }
-
     </style>
 
     <!-- Thư viện nén file ZIP & MP3 (Có cơ chế fallback) -->
@@ -458,7 +468,7 @@
   <body>
 
     <!-- Tiêu đề chính h1 và Tác giả dưới h1 -->
-    <h1>Bộ Chuyển Đổi Âm Thanh Đa Định Dạng</h1>
+    <h1>Chuyển Video, Audio Sang Opus, MP3, WAV</h1>
     <div class="author-title">D.T.Chánh</div>
 
     <!-- Khối Grid chính gồm hai cột -->
@@ -579,10 +589,10 @@
       <div style="display: flex; flex-direction: column; gap: 1rem; min-width: 0; width: 100%;">
         
         <!-- THẺ 3: Bộ chuyển đổi tệp tin âm thanh kéo thả -->
-        <div class="card" id="card-converter" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="card" id="card-converter" style="display: flex; flex-direction: column;">
           <h2>
             <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-            Chuyển đổi Tệp Âm thanh & Video
+            Chọn Video, Audio
           </h2>
           
           <!-- Vùng kéo thả tệp -->
@@ -601,7 +611,7 @@
           
           <!-- Danh sách tệp tin đã chọn -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <h3>Danh sách hàng đợi chuyển đổi</h3>
+            <h3>Danh sách hàng đợi</h3>
             <span id="queue-count" style="font-size: 0.95rem; font-weight: bold; color: var(--text-secondary);">0 tệp</span>
           </div>
           
@@ -609,10 +619,10 @@
             <table class="file-table" id="file-table">
               <thead>
                 <tr>
-                  <th style="min-width: 10rem;">Tên tệp tin</th>
+                  <th style="min-width: 10rem;">Tên tập tin</th>
                   <th style="min-width: 5rem;">Kích thước gốc</th>
-                  <th style="min-width: 8rem;">Trạng thái & Tiến trình</th>
                   <th style="min-width: 6rem;">Kích thước mới</th>
+                  <th style="min-width: 8rem;">Trạng thái</th>
                   <th style="min-width: 3rem; text-align: center;">Thao tác</th>
                 </tr>
               </thead>
@@ -627,10 +637,10 @@
           </div>
           
           <!-- Bộ nút thao tác chuyển đổi -->
-          <div class="btn-group" style="margin-top: auto;">
+          <div class="btn-group" style="margin-top: 1rem;">
             <button id="btn-convert-start" class="btn btn-primary" disabled>
               <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Bắt đầu chuyển đổi
+              Bắt đầu
             </button>
             <button id="btn-clear-queue" class="btn btn-outline" disabled>
               <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -638,7 +648,7 @@
             </button>
             <button id="btn-download-zip" class="btn btn-outline" disabled>
               <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Tải tệp ZIP tổng hợp
+              Tải tất cả
             </button>
           </div>
         </div>
@@ -666,8 +676,16 @@
 
     </div>
 
-    <!-- Container thông báo nổi -->
-    <div class="toast-container" id="toast-container"></div>
+    <!-- THẺ 2: Nhật ký hoạt động hệ thống -->
+    <div class="card" id="card-log" style="display: flex; flex-direction: column; margin-top: 1rem;">
+      <h2 style="margin-bottom: 0.6rem;">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Nhật ký hệ thống
+      </h2>
+      <div id="log-console" class="log-console">
+        <!-- Dòng nhật ký sẽ được thêm tự động tại đây -->
+      </div>
+    </div>
 
     <!-- JavaScript Vanilla nguyên gốc, bắt lỗi đầy đủ -->
     <script>
@@ -699,6 +717,9 @@
         const configFormat = document.getElementById('config-format');
         configFormat.addEventListener('change', updateConfigForm);
         updateConfigForm();
+
+        // Ghi log khởi tạo thành công
+        showToast("Hệ thống đã sẵn sàng và sẵn sàng tiếp nhận tệp tin.", "info");
       });
 
       // 1. KIỂM TRA THƯ VIỆN & CƠ CHẾ DỰ PHÒNG OFFLINE (FALLBACK)
@@ -963,45 +984,25 @@
           if (item.status === 'chờ') {
             statusHtml = '<span style="color: var(--text-secondary);">Chờ chuyển đổi</span>';
           } else if (item.status === 'đang giải mã') {
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary);">Đang đọc & giải mã tệp...</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: 15%; background-color: #60a5fa;"></div></div>
-            `;
+            statusHtml = '<span style="color: #60a5fa; font-weight: bold;">Đang giải mã</span>';
           } else if (item.status === 'đang xử lý âm thanh') {
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary);">Đang chuẩn hoá âm thanh...</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: 50%; background-color: #c084fc;"></div></div>
-            `;
+            statusHtml = '<span style="color: #c084fc; font-weight: bold;">Chuẩn hoá</span>';
           } else if (item.status === 'đang mã hoá') {
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary);">Đang nén: ${item.progress}%</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: ${item.progress}%;"></div></div>
-            `;
+            statusHtml = '<span style="color: var(--color-primary); font-weight: bold;">Đang nén</span>';
           } else if (item.status === 'xong') {
             const saving = Math.round((1 - (item.compressedSize / item.originalSize)) * 100);
             statusHtml = `
               <span style="color: var(--color-success); font-weight: bold;">Hoàn thành</span>
-              <div class="progress-bar-container"><div class="progress-bar success" style="width: 100%;"></div></div>
-              <div style="font-size: 0.8rem; margin-top: 0.1rem;" class="saving-ratio">Giảm ${saving}% dung lượng!</div>
+              <div style="font-size: 0.8rem; margin-top: 0.1rem;" class="saving-ratio">Giảm ${saving}%!</div>
             `;
           } else if (item.status === 'đang kiểm tra') {
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary);">Đang kiểm tra...</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: 10%; background-color: #f59e0b;"></div></div>
-            `;
+            statusHtml = '<span style="color: #f59e0b; font-weight: bold;">Kiểm tra</span>';
           } else if (item.status === 'đang tách âm thanh') {
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary);">Đang tách âm thanh...</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: 10%; background-color: var(--color-primary);"></div></div>
-            `;
+            statusHtml = '<span style="color: var(--color-primary); font-weight: bold;">Đang tách</span>';
           } else if (item.status === 'lỗi') {
             statusHtml = `<span style="color: var(--color-danger); font-weight: bold;" title="${item.errorMsg}">Lỗi xử lý</span>`;
           } else {
-            // Hiển thị tất cả các trạng thái tuỳ biến khác hoặc tiến trình trích xuất trực tiếp
-            statusHtml = `
-              <div style="font-weight: bold; color: var(--color-primary); font-size: 0.95rem;" title="${item.status}">${item.status}</div>
-              <div class="progress-bar-container"><div class="progress-bar" style="width: ${item.progress || 10}%; background-color: var(--color-primary);"></div></div>
-            `;
+            statusHtml = `<span style="color: var(--color-primary); font-weight: bold;" title="${item.status}">${item.status}</span>`;
           }
 
           let sizeNewHtml = '-';
@@ -1032,11 +1033,10 @@
           tr.innerHTML = `
             <td>
               <div style="font-weight: bold; word-break: break-all;">${item.file.name}</div>
-              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.1rem;">Tệp nén: ${item.newName}</div>
             </td>
             <td>${formatBytesVN(item.originalSize)}</td>
-            <td>${statusHtml}</td>
             <td>${sizeNewHtml}</td>
+            <td>${statusHtml}</td>
             <td>
               ${actionBtnHtml}
             </td>
@@ -1068,6 +1068,55 @@
           }
 
           tableBody.appendChild(tr);
+
+          // Tạo thanh chạy tiến trình toàn hàng ngang (colspan 5) cho các trạng thái đang hoạt động
+          if (item.status !== 'chờ' && item.status !== 'xong' && item.status !== 'lỗi') {
+            // Tối ưu padding và bỏ đường viền dưới của hàng thông tin chính để liên kết liền mạch với thanh tiến trình ngay dưới
+            const mainTds = tr.querySelectorAll('td');
+            mainTds.forEach(td => {
+              td.style.borderBottom = 'none';
+              td.style.paddingBottom = '0.2rem';
+            });
+
+            const progressTr = document.createElement('tr');
+            progressTr.className = 'progress-row';
+
+            let progressPercent = 0;
+            let progressLabel = '';
+
+            if (item.status === 'đang giải mã') {
+              progressPercent = 15;
+              progressLabel = 'Đang đọc & giải mã tệp...';
+            } else if (item.status === 'đang xử lý âm thanh') {
+              progressPercent = 50;
+              progressLabel = 'Đang chuẩn hoá âm thanh...';
+            } else if (item.status === 'đang mã hoá') {
+              progressPercent = item.progress || 0;
+              progressLabel = `Đang nén: ${progressPercent}%`;
+            } else if (item.status === 'đang kiểm tra') {
+              progressPercent = 10;
+              progressLabel = 'Đang kiểm tra...';
+            } else if (item.status === 'đang tách âm thanh') {
+              progressPercent = 10;
+              progressLabel = 'Đang tách âm thanh...';
+            } else {
+              progressPercent = item.progress || 10;
+              progressLabel = item.status;
+            }
+
+            progressTr.innerHTML = `
+              <td colspan="5" style="padding: 0.2rem 0.6rem 0.8rem 0.6rem; background-color: rgba(2, 132, 199, 0.02); border-bottom: 2px solid var(--color-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; margin-bottom: 0.4rem;">
+                  <span style="font-weight: bold; color: var(--color-primary);">Tiến trình: ${progressPercent}%</span>
+                  <span style="color: var(--text-secondary); font-size: 0.85rem;">${progressLabel}</span>
+                </div>
+                <div class="progress-bar-container" style="width: 100%; height: 8px; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 0;">
+                  <div class="progress-bar" style="width: ${progressPercent}%; height: 100%; background-color: var(--color-primary); transition: width 0.1s;"></div>
+                </div>
+              </td>
+            `;
+            tableBody.appendChild(progressTr);
+          }
         });
       }
 
@@ -2257,44 +2306,53 @@
         });
       }
 
-      // Hệ thống hiển thị Toast thông báo thanh lịch
+      // Hệ thống ghi nhận và hiển thị Nhật ký Hoạt động Hệ thống
       function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        const logConsole = document.getElementById('log-console');
+        if (!logConsole) return;
+
+        // Xác định biểu tượng hình tròn dựa trên type và từ khoá trong tin nhắn
+        let emoticonClass = 'type-info';
+        let emoticonText = '🔵';
+
+        const msgLower = message.toLowerCase();
         
-        let iconHtml = '';
-        if (type === 'success') {
-          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #4ade80;"><polyline points="20 6 9 17 4 12"/></svg>';
-        } else if (type === 'danger') {
-          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #f87171;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-        } else {
-          iconHtml = '<svg class="icon" viewBox="0 0 24 24" style="color: #94a3b8;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+        if (type === 'success' || msgLower.includes('thành công') || msgLower.includes('hoàn thành')) {
+          emoticonClass = 'type-success';
+          emoticonText = '🟢';
+        } else if (type === 'danger' || msgLower.includes('lỗi') || msgLower.includes('thất bại') || msgLower.includes('không thể')) {
+          emoticonClass = 'type-danger';
+          emoticonText = '🔴';
+        } else if (type === 'warning' || msgLower.includes('cảnh báo') || msgLower.includes('chú ý') || msgLower.includes('trùng')) {
+          emoticonClass = 'type-warning';
+          emoticonText = '🟡';
+        } else if (type === 'info' || type === 'outline') {
+          emoticonClass = 'type-info';
+          emoticonText = '🔵';
         }
 
-        toast.innerHTML = `
-          ${iconHtml}
-          <div style="font-size: 0.95rem; font-weight: bold;">${message}</div>
+        // Lấy thời gian hiện tại theo tiêu chuẩn Việt Nam
+        const now = new Date();
+        const hr = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const sec = String(now.getSeconds()).padStart(2, '0');
+        const timeStr = `[${hr}:${min}:${sec}]`;
+
+        // Tạo dòng nhật ký mới
+        const logItem = document.createElement('div');
+        logItem.className = 'log-item';
+        logItem.innerHTML = `
+          <span class="log-emoticon ${emoticonClass}">${emoticonText}</span>
+          <span class="log-time">${timeStr}</span>
+          <span class="log-text">${message}</span>
         `;
 
-        container.appendChild(toast);
+        // Thêm vào vùng nhật ký
+        logConsole.appendChild(logItem);
 
-        // Tự biến mất sau 6.0 giây để người dùng dễ đọc hơn
-        setTimeout(() => {
-          toast.style.animation = 'slide-out 0.2s ease-in forwards';
-          toast.addEventListener('animationend', () => {
-            toast.remove();
-          });
-        }, 6000);
+        // Cuộn xuống cuối để xem nhật ký mới nhất
+        logConsole.scrollTop = logConsole.scrollHeight;
       }
     </script>
-
-    <!-- Style cho hiệu ứng slide-out biến mất của toast -->
-    <style>
-      @keyframes slide-out {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-    </style>
   </body>
 </html>
